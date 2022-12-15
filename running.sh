@@ -1,0 +1,21 @@
+python train.py \
+--do_eval \
+--PLM klue/roberta-base \
+--validation_ratio 0.2 \
+--max_length 128 \
+--model_name RobertaForSequenceClassification \
+--output_dir exps \
+--data_dir data \
+--train_data_file train.csv \
+--num_train_epochs 3 \
+--per_gpu_train_batch_size 4 \
+--per_gpu_eval_batch_size 16 \
+--eval_steps 10 \
+--logging_steps 100 \
+--evaluation_strategy steps \
+--save_strategy no \
+--learning_rate 3e-5 \
+--warmup_ratio 0.05 \
+--weight_decay 1e-3 \
+--minimum_size 100 \
+--maximum_size 5000
