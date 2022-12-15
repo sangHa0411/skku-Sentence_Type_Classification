@@ -68,6 +68,8 @@ class StratifiedSampler(Sampler[int]):
         label_size = {}
         for l in label_map :
             label_size[l] = int(self.batch_size * (len(label_map[l]) / total_size))
+            if label_size[l] == 0 :
+                label_size[l] = 1
 
         sampled = []
         iter_size = n // self.batch_size
@@ -75,6 +77,10 @@ class StratifiedSampler(Sampler[int]):
             sub_sampled = []
             for l in label_map :
                 sub_batch_size = label_size[l]
+
+                if sub_batch_size*i > len(label_map[l]) :
+                    continue
+
                 sub_ids = label_map[l][sub_batch_size*i:sub_batch_size*(i+1)]
                 sub_sampled.extend(sub_ids)
 

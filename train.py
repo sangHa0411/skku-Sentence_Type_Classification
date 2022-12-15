@@ -13,7 +13,6 @@ from utils.encoder import Encoder
 from utils.seperator import Seperator
 from utils.augmentation import Augmentation
 from models.roberta import RobertaForSequenceClassification
-
 from datasets import Dataset, DatasetDict
 
 from arguments import (
@@ -38,6 +37,7 @@ def main():
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
     num_proc = int(cpu_cores // 2)
+    training_args.dataloader_num_workers = num_proc
 
     # -- Arguments
     model_args, data_args, training_args, logging_args = parser.parse_args_into_dataclasses()
@@ -79,16 +79,16 @@ def main():
     encoder = Encoder(tokenizer, data_args.max_length, label_dict)
     if training_args.do_eval :
         datasets = datasets.map(encoder, batched=True, num_proc=num_proc)
-        train_dataset = datasets['train']
-        eval_dataset = datasets['validation']
+        # train_dataset = datasets['train']
+        # eval_dataset = datasets['validation']
 
-        train_dataset = augmentator(train_dataset)
-        datasets = DatasetDict({'train' : train_dataset, 'validation' : eval_dataset})
+        # train_dataset = augmentator(train_dataset)
+        # datasets = DatasetDict({'train' : train_dataset, 'validation' : eval_dataset})
         datasets = datasets.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label'])
         print(datasets)
     else :
         dataset = dataset.map(encoder, batched=True, num_proc=num_proc)
-        dataset = augmentator(dataset)
+        # dataset = augmentator(dataset)
         dataset = dataset.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label'])
         print(dataset)
 
@@ -113,21 +113,21 @@ def main():
     metrics = Metrics()
     compute_metrics = metrics.compute_metrics
 
-    # # -- Output Directory
-    # load_dotenv(dotenv_path=logging_args.dotenv_path)
+    # -- Output Directory
+    load_dotenv(dotenv_path=logging_args.dotenv_path)
 
-    # WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
-    # wandb.login(key=WANDB_AUTH_KEY)
+    WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
+    wandb.login(key=WANDB_AUTH_KEY)
 
-    # args = training_args
-    # wandb_name = f'EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
-    # wandb.init(
-    #     entity='sangha0411',
-    #     project=logging_args.project_name, 
-    #     name=wandb_name,
-    #     group=logging_args.group_name
-    # )
-    # wandb.config.update(training_args)
+    args = training_args
+    wandb_name = f'EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
+    wandb.init(
+        entity='sangha0411',
+        project=logging_args.project_name, 
+        name=wandb_name,
+        group=logging_args.group_name
+    )
+    wandb.config.update(training_args)
 
     # -- Trainer
     if training_args.do_eval :
@@ -154,10 +154,11 @@ def main():
 
     if training_args.do_eval :
         print('\nEvaluating')
-        trainer.evaluate()
+        eval_log = trainer.evaluate()
+        print(eval_log)
 
     trainer.save_model(training_args.output_dir)
-    # wandb.finish()
+    wandb.finish()
 
 
 def seed_everything(seed):

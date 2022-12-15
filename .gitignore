@@ -1,7 +1,7 @@
 wandb
 wandb.env
 exps
-result
+results
 data
 __pycache__
 *.ipynb

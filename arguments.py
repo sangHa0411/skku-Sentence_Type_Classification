@@ -16,12 +16,6 @@ class ModelArguments:
             "help": "Model class name"
         },
     )
-    save_path: str = field(
-        default="results", 
-        metadata={
-            "help": "Path to save checkpoint from fine tune model"
-        },
-    )
     
 
 @dataclass
@@ -114,4 +108,16 @@ class InferenceArguments:
         metadata={
             "help": "name of submission data"
         }
+    )
+    save_file_name: str = field(
+        default="2022-12-16-01.csv", 
+        metadata={
+            "help": "name of saved submission file name"
+        }
+    )
+    save_dir: str = field(
+        default="results", 
+        metadata={
+            "help": "submission directory"
+        },
     )

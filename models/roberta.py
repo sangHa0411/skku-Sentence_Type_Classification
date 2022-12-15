@@ -51,10 +51,12 @@ class RobertaForSequenceClassification(RobertaPreTrainedModel):
         self.config = config
 
         self.roberta = RobertaModel(config, add_pooling_layer=False)
-        self.classifier1 = ClassificationHead(config, config.category1_num_labels)
-        self.classifier2 = ClassificationHead(config, config.category2_num_labels)
-        self.classifier3 = ClassificationHead(config, config.category3_num_labels)
-        self.classifier4 = ClassificationHead(config, config.category4_num_labels)
+        
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.classifier1 = nn.Linear(config.hidden_size, config.category1_num_labels)
+        self.classifier2 = nn.Linear(config.hidden_size, config.category2_num_labels)
+        self.classifier3 = nn.Linear(config.hidden_size, config.category3_num_labels)
+        self.classifier4 = nn.Linear(config.hidden_size, config.category4_num_labels)
 
     def forward(
         self,
@@ -87,6 +89,7 @@ class RobertaForSequenceClassification(RobertaPreTrainedModel):
             return_dict=return_dict,
         )
         sequence_output = outputs[0][:, 0, :]
+        sequence_output = self.dropout(sequence_output)
 
         logits1 = self.classifier1(sequence_output)
         logits2 = self.classifier2(sequence_output)
