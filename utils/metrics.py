@@ -9,7 +9,6 @@ class Metrics :
         self.categories = ['type', 'polarity', 'time', 'certainty']
 
     def compute_metrics(self, pred: EvalPrediction):
-        breakpoint()
         labels = pred.label_ids
         predictions = pred.predictions[4:]
         
@@ -27,19 +26,19 @@ class Metrics :
 
 
         eval_size = len(labels[0])
-        predictions1 = pred.predictions[0].argmax(-1)
-        predictions2 = pred.predictions[0].argmax(-1)
-        predictions3 = pred.predictions[0].argmax(-1)
-        predictions4 = pred.predictions[0].argmax(-1)
+        pred_args1 = predictions[0].argmax(-1)
+        pred_args2 = predictions[1].argmax(-1)
+        pred_args3 = predictions[2].argmax(-1)
+        pred_args4 = predictions[3].argmax(-1)
 
         total_acc = 0.0
         for i in range(eval_size) :
-            if labels[0][i] == predictions1[i] and \
-                labels[1][i] == predictions2[i] and \
-                labels[2][i] == predictions3[i] and \
-                labels[3][i] == predictions4[i] :
+            if labels[0][i] == pred_args1[i] and \
+                labels[1][i] == pred_args2[i] and \
+                labels[2][i] == pred_args3[i] and \
+                labels[3][i] == pred_args4[i] :
                 total_acc += 1.0
                 
-        total_acc /= len(eval_size)
+        total_acc /= eval_size
         metric['total_acc'] = total_acc
         return metric
