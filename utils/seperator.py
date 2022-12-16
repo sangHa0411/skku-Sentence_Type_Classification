@@ -26,11 +26,11 @@ class Seperator :
 
             if len(id_list) >= 5 :
                 size = len(id_list)
-                train_size = int(size * 0.8)
+                train_size = int(size * (1.0-self.validation_ratio))
                 train_ids.extend(id_list[:train_size])
                 validation_ids.extend(id_list[train_size:])
             else :
-                validation_ids.extend(id_list)
+                train_ids.extend(id_list)
 
         train_dset = org_dataset.select(train_ids)
         validation_dset = org_dataset.select(validation_ids)
