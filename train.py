@@ -13,6 +13,7 @@ from utils.encoder import Encoder
 from utils.seperator import Seperator
 from utils.augmentation import Augmentation
 from models.roberta import RobertaForSequenceClassification
+# from models.electra import ElectraForSequenceClassification
 from datasets import Dataset, DatasetDict
 
 from arguments import (
@@ -37,10 +38,10 @@ def main():
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
     num_proc = int(cpu_cores // 2)
-    training_args.dataloader_num_workers = num_proc
 
     # -- Arguments
     model_args, data_args, training_args, logging_args = parser.parse_args_into_dataclasses()
+    training_args.dataloader_num_workers = num_proc
     seed_everything(training_args.seed)
 
     # -- Loading datasets
@@ -79,16 +80,16 @@ def main():
     encoder = Encoder(tokenizer, data_args.max_length, label_dict)
     if training_args.do_eval :
         datasets = datasets.map(encoder, batched=True, num_proc=num_proc)
-        # train_dataset = datasets['train']
-        # eval_dataset = datasets['validation']
+        train_dataset = datasets['train']
+        eval_dataset = datasets['validation']
 
-        # train_dataset = augmentator(train_dataset)
-        # datasets = DatasetDict({'train' : train_dataset, 'validation' : eval_dataset})
+        train_dataset = augmentator(train_dataset)
+        datasets = DatasetDict({'train' : train_dataset, 'validation' : eval_dataset})
         datasets = datasets.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label'])
         print(datasets)
     else :
         dataset = dataset.map(encoder, batched=True, num_proc=num_proc)
-        # dataset = augmentator(dataset)
+        dataset = augmentator(dataset)
         dataset = dataset.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label'])
         print(dataset)
 
