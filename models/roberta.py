@@ -2,6 +2,7 @@
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
+from models.loss import FocalLoss
 from models.output import SequenceClassifierOutput
 from transformers.models.roberta.modeling_roberta import RobertaPreTrainedModel, RobertaModel
 
@@ -78,13 +79,15 @@ class RobertaForSequenceClassification(RobertaPreTrainedModel):
         loss = None
         loss1, loss2, loss3, loss4 = None, None, None, None
         if labels1 is not None and labels2 is not None and labels3 is not None and labels4 is not None:
-            loss_fct = CrossEntropyLoss()
+            
+            # loss_fct = FocalLoss(gamma=1, alpha=0.25)
+            loss_fct = nn.CrossEntropyLoss()
             loss1 = loss_fct(logits1.view(-1, self.config.category1_num_labels), labels1.view(-1))
             loss2 = loss_fct(logits2.view(-1, self.config.category2_num_labels), labels2.view(-1))
             loss3 = loss_fct(logits3.view(-1, self.config.category3_num_labels), labels3.view(-1))
             loss4 = loss_fct(logits4.view(-1, self.config.category4_num_labels), labels4.view(-1))
 
-            loss = loss1 + loss2 + loss3 + loss4
+            loss = (loss1 + loss2 + loss3 + loss4) / 4
 
         if not return_dict:
             output = (logits1, logits2, logits3, logits4, ) + outputs[2:]
