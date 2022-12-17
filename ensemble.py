@@ -2,6 +2,7 @@ import os
 import importlib
 import numpy as np
 import pandas as pd
+import collections
 import multiprocessing
 from tqdm import tqdm
 from datasets import Dataset
@@ -22,16 +23,20 @@ from transformers import (
     Trainer,
 )
 
-ENSEMBLE_SIZE = 3
+ENSEMBLE_SIZE = 4
 MODEL_NAMES = [
+    # 'RobertaBaseForSequenceClassification',
     'RobertaBaseForSequenceClassification',
-    'RobertaFocalForSequenceClassification',
-    'T5EncoderArcFaceForSequenceClassification'
+    'RobertaBaseForSequenceClassification',
+    'RobertaBaseForSequenceClassification',
+    'RobertaBaseForSequenceClassification',
 ]
 MODEL_PATHS = [
-    './exps/model1/checkpoint-2000',
+    # './exps/model1/checkpoint-2000',
     './exps/model2/checkpoint-2000',
     './exps/model3/checkpoint-2000',
+    './exps/model4/checkpoint-2000',
+    './exps/model5/checkpoint-2000',
 ]
 
 
@@ -56,7 +61,16 @@ def main():
     dataset = Dataset.from_pandas(df)
     print(dataset)
 
-    logits1, logits2, logits3, logits4 = [], [], [], []
+    # -- Label Tag
+    label_dict = {
+        '유형' : {0 : '사실형', 1 : '추론형', 2 : '대화형', 3 : '예측형'},
+        '극성' : {0 : '긍정', 1 : '부정', 2 : '미정'},
+        '시제' : {0 : '과거', 1 : '현재', 2 : '미래'},
+        '확실성' : {0 : '확실', 1 : '불확실'},
+    }
+
+    test_size = len(dataset['ID'])
+    predictions = []
     
     for i in range(ENSEMBLE_SIZE) :
         model_name = MODEL_NAMES[i]
@@ -101,47 +115,29 @@ def main():
         # -- Prediction
         prediction_logits = trainer.predict(test_dataset=dataset)[0]
 
-        # -- Softmax
-        prediction_logits1 = np.exp(prediction_logits[0])
-        predictions_probs1 = prediction_logits1 / np.expand_dims(np.sum(prediction_logits1, axis=-1), -1)
+        pred_args1 = prediction_logits[0].argmax(-1)
+        pred_args2 = prediction_logits[1].argmax(-1)
+        pred_args3 = prediction_logits[2].argmax(-1)
+        pred_args4 = prediction_logits[3].argmax(-1)
 
-        prediction_logits2 = np.exp(prediction_logits[1])
-        predictions_probs2 = prediction_logits2 / np.expand_dims(np.sum(prediction_logits2, axis=-1), -1)
+        sub_predictions = []
+        for i in tqdm(range(test_size)) :
+            decoded_string = label_dict['유형'][pred_args1[i]] + '-' + \
+                label_dict['극성'][pred_args2[i]] + '-' + \
+                label_dict['시제'][pred_args3[i]] + '-' + \
+                label_dict['확실성'][pred_args4[i]]
 
-        prediction_logits3 = np.exp(prediction_logits[2])
-        predictions_probs3 = prediction_logits3 / np.expand_dims(np.sum(prediction_logits3, axis=-1), -1)
-
-        prediction_logits4 = np.exp(prediction_logits[3])
-        predictions_probs4 = prediction_logits4 / np.expand_dims(np.sum(prediction_logits4, axis=-1), -1)
-
-        logits1.append(predictions_probs1)
-        logits2.append(predictions_probs2)
-        logits3.append(predictions_probs3)
-        logits4.append(predictions_probs4)
+            sub_predictions.append(decoded_string)
+        predictions.append(sub_predictions)
 
     # -- Selecting arguments
-    pred_args1 = np.mean(logits1, axis=0).argmax(-1)
-    pred_args2 = np.mean(logits2, axis=0).argmax(-1)
-    pred_args3 = np.mean(logits3, axis=0).argmax(-1)
-    pred_args4 = np.mean(logits4, axis=0).argmax(-1)
-
-    # -- Postprocess
-    label_dict = {
-        '유형' : {0 : '사실형', 1 : '추론형', 2 : '대화형', 3 : '예측형'},
-        '극성' : {0 : '긍정', 1 : '부정', 2 : '미정'},
-        '시제' : {0 : '과거', 1 : '현재', 2 : '미래'},
-        '확실성' : {0 : '확실', 1 : '불확실'},
-    }
-
     labels = []
-    test_size = len(dataset['input_ids'])
-    for i in tqdm(range(test_size)) :
-        decoded_string = label_dict['유형'][pred_args1[i]] + '-' + \
-            label_dict['극성'][pred_args2[i]] + '-' + \
-            label_dict['시제'][pred_args3[i]] + '-' + \
-            label_dict['확실성'][pred_args4[i]]
+    for i in range(test_size) :
+        counter = collections.Counter()
+        counter.update([predictions[j][i] for j in range(ENSEMBLE_SIZE)])
 
-        labels.append(decoded_string)
+        items = sorted(counter.items(), key=lambda x : x[1], reverse=True)
+        labels.append(items[0][0])
 
     # -- Submission
     submission_df = pd.read_csv(

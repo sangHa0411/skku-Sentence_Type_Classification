@@ -118,10 +118,10 @@ class RobertaFocalForSequenceClassification(RobertaPreTrainedModel):
         
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         
-        self.classifier1 = ClassificationHead(config, config.category1_num_labels)
-        self.classifier2 = ClassificationHead(config, config.category2_num_labels)
-        self.classifier3 = ClassificationHead(config, config.category3_num_labels)
-        self.classifier4 = ClassificationHead(config, config.category4_num_labels)
+        self.classifier1 = nn.Linear(config.hidden_size, config.category1_num_labels)
+        self.classifier2 = nn.Linear(config.hidden_size, config.category2_num_labels)
+        self.classifier3 = nn.Linear(config.hidden_size, config.category3_num_labels)
+        self.classifier4 = nn.Linear(config.hidden_size, config.category4_num_labels)
 
     def forward(
         self,

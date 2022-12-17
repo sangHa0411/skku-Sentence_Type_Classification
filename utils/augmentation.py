@@ -28,8 +28,7 @@ class Augmentation :
 
             if previous_size > self.min_num :
                 if previous_size > self.max_num :
-                    selected_size = int(previous_size * self.reduction)
-                    augmentated_id_list = random.sample(id_list, selected_size)
+                    augmentated_id_list = random.sample(id_list, self.max_num)
                 else :
                     augmentated_id_list = id_list
                 

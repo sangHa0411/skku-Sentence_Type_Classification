@@ -58,6 +58,8 @@ def main():
         model_category = importlib.import_module('models.roberta')
     elif 'electra' in inference_args.model_type :
         model_category = importlib.import_module('models.electra')
+    elif 't5' in inference_args.model_type :
+        model_category = importlib.import_module('models.t5')
 
     model_class = getattr(model_category, inference_args.model_name)
     model = model_class.from_pretrained(model_name, config=config)
