@@ -16,7 +16,8 @@ class FocalLoss(nn.Module):
     focal_loss = ce_loss * self.alpha * (1-pt)**self.gamma
     return torch.mean(focal_loss)
 	
-class ArcFaceLoss(nn.Module):
+class ArcFace(nn.Module):
+	# Source from https://www.dacon.io/competitions/official/235875/codeshare/4589?page=1&dtype=recent
 	def __init__(self, in_features, out_features, s=30.0, m=0.50, easy_margin=False):
 		super().__init__()
 		self.in_features = in_features
