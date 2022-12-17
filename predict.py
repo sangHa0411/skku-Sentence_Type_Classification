@@ -1,10 +1,10 @@
 import os
+import importlib
 import pandas as pd
 import multiprocessing
 from tqdm import tqdm
 from datasets import Dataset
 from utils.encoder import Encoder
-from models.roberta import RobertaForSequenceClassification
 from datasets import Dataset
 
 from arguments import (
@@ -54,7 +54,13 @@ def main():
 
     # -- Loading Model
     config = AutoConfig.from_pretrained(model_name)
-    model = RobertaForSequenceClassification.from_pretrained(model_name, config=config)
+    if 'roberta' in inference_args.model_type :
+        model_category = importlib.import_module('models.roberta')
+    elif 'electra' in inference_args.model_type :
+        model_category = importlib.import_module('models.electra')
+
+    model_class = getattr(model_category, inference_args.model_name)
+    model = model_class.from_pretrained(model_name, config=config)
 
     # -- DataCollator
     data_collator = DataCollatorWithPadding(

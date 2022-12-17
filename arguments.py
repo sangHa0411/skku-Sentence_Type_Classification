@@ -109,6 +109,18 @@ class InferenceArguments:
             "help": "name of submission data"
         }
     )
+    model_type: str = field(
+        default="roberta", 
+        metadata={
+            "help": "model type"
+        },
+    )
+    model_name: str = field(
+        default="RobertaForSequenceClassification", 
+        metadata={
+            "help": "model class name"
+        },
+    )
     save_file_name: str = field(
         default="2022-12-16-01.csv", 
         metadata={

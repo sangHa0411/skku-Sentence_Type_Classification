@@ -4,6 +4,7 @@ import random
 import wandb
 import numpy as np
 import pandas as pd
+import importlib
 import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
@@ -12,8 +13,6 @@ from utils.metrics import Metrics
 from utils.encoder import Encoder
 from utils.seperator import Seperator
 from utils.augmentation import Augmentation
-from models.roberta import RobertaForSequenceClassification
-# from models.electra import ElectraForSequenceClassification
 from datasets import Dataset, DatasetDict
 
 from arguments import (
@@ -27,7 +26,7 @@ from transformers import (
     AutoTokenizer,
     HfArgumentParser,
     DataCollatorWithPadding,
-    Trainer
+    Trainer,
 )
 
 def main():
@@ -100,8 +99,14 @@ def main():
     config.category2_num_labels = len(label_dict['극성'])
     config.category3_num_labels = len(label_dict['시제'])
     config.category4_num_labels = len(label_dict['확실성'])
+    
+    if 'roberta' in model_args.PLM :
+        model_category = importlib.import_module('models.roberta')
+    elif 'electra' in model_args.PLM :
+        model_category = importlib.import_module('models.electra')
 
-    model = RobertaForSequenceClassification.from_pretrained(model_args.PLM, config=config)
+    model_class = getattr(model_category, model_args.model_name)
+    model = model_class.from_pretrained(model_args.PLM, config=config)
 
     # -- DataCollator
     data_collator = DataCollatorWithPadding(
@@ -121,7 +126,11 @@ def main():
     wandb.login(key=WANDB_AUTH_KEY)
 
     args = training_args
-    wandb_name = f'EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
+    if args.max_steps == -1 :
+        wandb_name = f'EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
+    else :
+        wandb_name = f'MS:{args.max_steps}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
+
     wandb.init(
         entity='sangha0411',
         project=logging_args.project_name, 
@@ -158,7 +167,8 @@ def main():
         eval_log = trainer.evaluate()
         print(eval_log)
 
-    trainer.save_model(training_args.output_dir)
+    if training_args.do_eval == False :
+        trainer.save_model(training_args.output_dir)
     wandb.finish()
 
 

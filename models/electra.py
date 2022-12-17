@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss
+from models.loss import FocalLoss
 from typing import Optional, Tuple, Union
 from transformers import ElectraPreTrainedModel, ElectraModel
 from models.output import SequenceClassifierOutput
@@ -90,7 +91,7 @@ class ElectraForSequenceClassification(ElectraPreTrainedModel):
         loss = None
         loss1, loss2, loss3, loss4 = None, None, None, None
         if labels1 is not None and labels2 is not None and labels3 is not None and labels4 is not None:
-            loss_fct = CrossEntropyLoss()
+            loss_fct = FocalLoss(gamma=1, alpha=0.25)
             loss1 = loss_fct(logits1.view(-1, self.config.category1_num_labels), labels1.view(-1))
             loss2 = loss_fct(logits2.view(-1, self.config.category2_num_labels), labels2.view(-1))
             loss3 = loss_fct(logits3.view(-1, self.config.category3_num_labels), labels3.view(-1))

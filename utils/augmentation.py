@@ -82,22 +82,6 @@ class Augmentation :
         data['문장'] = sentence
         return data
 
-    def change(self, data) :
-        sentence = data['문장']
-        words = sentence.split(' ')
-
-        if len(words) > 3 :   
-            indices = random.sample(range(len(words)), 2)
-            prev_index, next_index = indices
-
-            temp = words[prev_index]
-            words[prev_index] = words[next_index]
-            words[next_index] = temp
-
-            sentence = ' '.join(words)
-
-        data['문장'] = sentence
-        return data
 
     def reverse(self, data) :
         sentence = data['문장']
@@ -110,6 +94,7 @@ class Augmentation :
 
         data['문장'] = sentence
         return data
+
 
     def delete(self, data) :
 
@@ -132,18 +117,17 @@ class Augmentation :
         data['문장'] = sentence
         return data
 
+
     def augment(self, data, status) :
         if status == 0 :
             return data
         else :
-            option = np.random.randint(4)
+            option = np.random.randint(3)
             if option == 0 :
                 data = self.aeda(data)
             elif option == 1 :
                 data = self.reverse(data)
-            elif option == 2 :
-                data = self.delete(data)
             else :
-                data = self.change(data)
+                data = self.delete(data)
             return data
 
