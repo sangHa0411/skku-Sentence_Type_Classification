@@ -4,7 +4,7 @@ python train.py \
 --do_eval \
 --seed 42 \
 --PLM klue/roberta-large \
---model_name RobertaBaseForSequenceClassification \
+--model_name RobertaFocalForSequenceClassification \
 --validation_ratio 0.2 \
 --max_length 128 \
 --output_dir exps \
@@ -47,6 +47,31 @@ python train.py \
 --warmup_ratio 0.05 \
 --weight_decay 1e-3 \
 --minimum_size 30 \
+--maximum_size 5000
+
+## T5 Encoder
+python train.py \
+--do_eval \
+--seed 42 \
+--PLM KETI-AIR/ke-t5-large-ko \
+--model_name T5EncoderForSequenceClassification \
+--validation_ratio 0.2 \
+--max_length 128 \
+--output_dir exps \
+--data_dir data \
+--train_data_file train.csv \
+--num_train_epochs 3 \
+--max_steps 2000 \
+--per_device_train_batch_size 16 \
+--per_device_eval_batch_size 16 \
+--eval_steps 500 \
+--logging_steps 100 \
+--evaluation_strategy steps \
+--save_strategy no \
+--learning_rate 5e-6 \
+--warmup_ratio 0.05 \
+--weight_decay 1e-3 \
+--minimum_size 20 \
 --maximum_size 5000
 
 # Full Training

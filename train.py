@@ -104,6 +104,10 @@ def main():
         model_category = importlib.import_module('models.roberta')
     elif 'electra' in model_args.PLM :
         model_category = importlib.import_module('models.electra')
+    elif 't5' in model_args.PLM :
+        model_category = importlib.import_module('models.t5')
+    else :
+        raise NotImplementedError('Not implemented model type')
 
     model_class = getattr(model_category, model_args.model_name)
     model = model_class.from_pretrained(model_args.PLM, config=config)
