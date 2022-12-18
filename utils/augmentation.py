@@ -7,11 +7,11 @@ from tqdm import tqdm
 
 class Augmentation :
 
-    def __init__(self, max_num, min_num, reduction=0.8) :
-        self.max_num = max_num
+    def __init__(self, min_num, reduction=0.8, eval_flag=True) :
         self.min_num = min_num
         self.reduction = reduction
         self.punct = [".", ";", "?", ":", "!", ","]
+        self.eval_flag = eval_flag
 
     def __call__(self, dataset):
         
@@ -26,12 +26,13 @@ class Augmentation :
             id_list = label_ids[l]
             previous_size = len(id_list)
 
-            if previous_size > self.min_num :
-                if previous_size > self.max_num :
-                    augmentated_id_list = random.sample(id_list, self.max_num)
-                else :
+            if previous_size > self.min_num :                
+                if self.eval_flag :
                     augmentated_id_list = id_list
-                
+                else :
+                    sample_size = int(len(id_list) * self.reduction)
+                    augmentated_id_list = random.sample(id_list, sample_size)
+                    
                 augmentated_id_list = [(a_id, 0) for a_id in augmentated_id_list]
             else :
                 augmentated_id_list = [(a_id, 0) for a_id in id_list]

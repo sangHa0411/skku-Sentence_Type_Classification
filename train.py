@@ -8,7 +8,7 @@ import importlib
 import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
-# from trainer import Trainer
+from trainer import Trainer
 from utils.metrics import Metrics
 from utils.encoder import Encoder
 from utils.seperator import Seperator
@@ -26,7 +26,7 @@ from transformers import (
     AutoTokenizer,
     HfArgumentParser,
     DataCollatorWithPadding,
-    Trainer,
+    # Trainer,
 )
 
 def main():
@@ -72,12 +72,12 @@ def main():
     model_name = model_args.PLM
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
     
-    augmentator = Augmentation(max_num=data_args.maximum_size, min_num=data_args.minimum_size)
-
     # -- Encoding datasets
     print("\nEncoding datasets")
     encoder = Encoder(tokenizer, data_args.max_length, label_dict)
     if training_args.do_eval :
+        augmentator = Augmentation(min_num=data_args.minimum_size, eval_flag=True)
+
         datasets = datasets.map(encoder, batched=True, num_proc=num_proc)
         train_dataset = datasets['train']
         eval_dataset = datasets['validation']
@@ -87,6 +87,7 @@ def main():
         datasets = datasets.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label'])
         print(datasets)
     else :
+        augmentator = Augmentation(min_num=data_args.minimum_size, eval_flag=False)
         dataset = dataset.map(encoder, batched=True, num_proc=num_proc)
         dataset = augmentator(dataset)
         dataset = dataset.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label'])
@@ -95,10 +96,15 @@ def main():
     # -- Loading config & Model
     print("\nLoad Model")
     config = AutoConfig.from_pretrained(model_args.PLM)
+    ## -- Category Labels
     config.category1_num_labels = len(label_dict['유형'])
     config.category2_num_labels = len(label_dict['극성'])
     config.category3_num_labels = len(label_dict['시제'])
     config.category4_num_labels = len(label_dict['확실성'])
+    ## -- Speical Token ids
+    config.cls_token_id = tokenizer.cls_token_id
+    config.eos_token_id = tokenizer.eos_token_id
+
     
     if 'roberta' in model_args.PLM :
         model_category = importlib.import_module('models.roberta')
