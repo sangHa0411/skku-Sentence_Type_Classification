@@ -14,6 +14,7 @@ from utils.encoder import Encoder
 from utils.seperator import Seperator
 from utils.augmentation import Augmentation
 from datasets import Dataset, DatasetDict
+import warnings
 
 from arguments import (
     ModelArguments, 
@@ -34,6 +35,8 @@ def main():
         (ModelArguments, DataTrainingArguments, TrainingArguments, LoggingArguments)
     )
     
+    warnings.filterwarnings(action='ignore')
+
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
     num_proc = int(cpu_cores // 2)
@@ -47,6 +50,9 @@ def main():
     print("\nLoad datasets")
     file_path = os.path.join(data_args.data_dir, data_args.train_data_file)
     df = pd.read_csv(file_path)
+
+    label_names = list(df['label'].unique())
+    label2index = {l:i for i, l in enumerate(label_names)}
 
     # -- Preprocessing datasets
     print("\nPreprocessing datasets")   
@@ -126,7 +132,7 @@ def main():
     )
 
     # -- Metrics
-    metrics = Metrics()
+    metrics = Metrics(label_names, label2index)
     compute_metrics = metrics.compute_metrics
 
     # -- Output Directory
