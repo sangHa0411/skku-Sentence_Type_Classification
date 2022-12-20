@@ -27,6 +27,7 @@ from transformers import (
     AutoTokenizer,
     HfArgumentParser,
     DataCollatorWithPadding,
+    # Trainer
 )
 
 def main():
@@ -52,7 +53,7 @@ def main():
     df = df.drop_duplicates(subset=['문장'])
 
     label_names = list(df['label'].unique())
-    label2index = {l:i for i, l in enumerate(label_names)}
+    label_dict = {l:i for i, l in enumerate(label_names)}
 
     # -- Preprocessing datasets
     print("\nPreprocessing datasets")   
@@ -66,12 +67,6 @@ def main():
 
     # -- Encoding datasets
     print("\nEncoding datasets")
-    label_dict = {
-        '유형' : {'사실형': 0, '추론형': 1, '대화형': 2, '예측형' : 3},
-        '극성' : {'긍정': 0, '부정': 1, '미정': 2},
-        '시제' : {'과거': 0, '현재': 1, '미래': 2},
-        '확실성' : {'확실': 0, '불확실': 1},
-    }
     
     # -- Load tokenizer
     print("\nLoad tokenizer")
@@ -112,11 +107,8 @@ def main():
     # -- Loading config & Model
     print("\nLoad Model")
     config = AutoConfig.from_pretrained(model_args.PLM)
-    ## -- Category Labels
-    config.category1_num_labels = len(label_dict['유형'])
-    config.category2_num_labels = len(label_dict['극성'])
-    config.category3_num_labels = len(label_dict['시제'])
-    config.category4_num_labels = len(label_dict['확실성'])
+    ## -- Labels
+    config.num_labels = len(label_names)
     ## -- Speical Token ids
     config.cls_token_id = tokenizer.cls_token_id
     config.eos_token_id = tokenizer.eos_token_id
@@ -142,7 +134,7 @@ def main():
     )
 
     # -- Metrics
-    metrics = Metrics(label_names, label2index)
+    metrics = Metrics(label_names, label_dict)
     compute_metrics = metrics.compute_metrics
 
     # -- Output Directory

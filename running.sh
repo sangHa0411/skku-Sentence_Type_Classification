@@ -4,7 +4,7 @@ python train.py \
 --do_eval \
 --seed 42 \
 --PLM klue/roberta-large \
---model_name RobertaBaseForSequenceClassification \
+--model_name RobertaSpecialTokenForSequenceClassification \
 --validation_ratio 0.2 \
 --max_length 128 \
 --output_dir exps/test \

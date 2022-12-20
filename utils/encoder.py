@@ -16,9 +16,6 @@ class Encoder :
         )
 
         if self.train_flag :
-            model_inputs['labels1'] = [self.label_dict['유형'][l] for l in examples['유형']]
-            model_inputs['labels2'] = [self.label_dict['극성'][l] for l in examples['극성']]
-            model_inputs['labels3'] = [self.label_dict['시제'][l] for l in examples['시제']]
-            model_inputs['labels4'] = [self.label_dict['확실성'][l] for l in examples['확실성']]
+            model_inputs['labels'] = [self.label_dict[l] for l in examples['label']]
 
         return model_inputs

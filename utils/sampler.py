@@ -43,16 +43,12 @@ class StratifiedSampler(Sampler[int]):
     def get_label_indices(self, data_socre) :
 
         label_indices = collections.defaultdict(list)
-        labels1 = data_socre['labels1']
-        labels2 = data_socre['labels2']
-        labels3 = data_socre['labels3']
-        labels4 = data_socre['labels4']
+        labels = data_socre['labels']
         
-        total_size = len(labels1)
+        total_size = len(labels)
         for i in range(total_size) :
-            label_list = [labels1[i], labels2[i], labels3[i], labels4[i]]
-            label_str = '-'.join(map(str, label_list))
-            label_indices[label_str].append(i)
+            label = labels[i]
+            label_indices[label].append(i)
         
         for l in label_indices :
             random.shuffle(label_indices[l])
@@ -73,7 +69,7 @@ class StratifiedSampler(Sampler[int]):
         else:
             generator = self.generator
 
-        total_size = len(self.data_source['labels1'])
+        total_size = len(self.data_source['labels'])
         label_indices, label_batch_size = self.get_label_indices(self.data_source)
 
         major_label_indices = []

@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 class Augmentation :
 
-    def __init__(self, tokenizer, max_num, min_num, reduction=0.8, undersampling_ratio=0.7, eval_flag=True) :
+    def __init__(self, tokenizer, max_num, min_num, reduction=0.8, undersampling_ratio=0.8, eval_flag=True) :
         self.tokenizer = tokenizer
         self.max_num = max_num
         self.min_num = min_num
@@ -36,11 +36,11 @@ class Augmentation :
                     sample_size = int(len(id_list) * self.reduction)
                     augmentated_id_list = random.sample(id_list, sample_size)
 
-                if len(augmentated_id_list) > self.max_num :
-                    augmentated_id_list = random.sample(
-                        augmentated_id_list, 
-                        int(len(augmentated_id_list) * self.undersampling_ratio)
-                    )
+                # if len(augmentated_id_list) > self.max_num :
+                #     augmentated_id_list = random.sample(
+                #         augmentated_id_list, 
+                #         int(len(augmentated_id_list) * self.undersampling_ratio)
+                #     )
 
                 augmentated_id_list = [(a_id, 0) for a_id in augmentated_id_list]
             
