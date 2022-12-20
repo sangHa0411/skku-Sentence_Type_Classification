@@ -23,20 +23,20 @@ from transformers import (
     Trainer,
 )
 
-ENSEMBLE_SIZE = 4
+ENSEMBLE_SIZE = 5
 MODEL_NAMES = [
-    # 'RobertaBaseForSequenceClassification',
+    'RobertaBaseForSequenceClassification',
     'RobertaBaseForSequenceClassification',
     'RobertaBaseForSequenceClassification',
     'RobertaBaseForSequenceClassification',
     'RobertaBaseForSequenceClassification',
 ]
 MODEL_PATHS = [
-    # './exps/model1/checkpoint-2000',
-    './exps/model2/checkpoint-2000',
-    './exps/model3/checkpoint-2000',
-    './exps/model4/checkpoint-2000',
-    './exps/model5/checkpoint-2000',
+    './exps/model1',
+    './exps/model2',
+    './exps/model3',
+    './exps/model4',
+    './exps/model5',
 ]
 
 

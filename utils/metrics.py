@@ -17,6 +17,24 @@ class Metrics :
         self.label_names = label_names
         self.label2index = label2index
 
+
+    def calculate_f1(self, labels, preds, size) :
+        label_vectors = []
+        pred_vectors = []
+
+        for l, p in zip(labels, preds) :
+            l_vector = [0]*size
+            l_vector[l] = 1
+            label_vectors.append(l_vector)
+
+            p_vector = [0]*size
+            p_vector[p] = 1
+            pred_vectors.append(p_vector)
+
+        f1 = f1_score(label_vectors, pred_vectors, average='weighted')
+        return f1
+
+
     def compute_metrics(self, pred: EvalPrediction):
         labels = pred.label_ids
         predictions = pred.predictions[4:]
@@ -28,6 +46,11 @@ class Metrics :
         pred_args2 = predictions[1].argmax(-1)
         pred_args3 = predictions[2].argmax(-1)
         pred_args4 = predictions[3].argmax(-1)
+
+        metric[self.categories[0] + '-f1'] = self.calculate_f1(labels[0], pred_args1, 4)
+        metric[self.categories[1] + '-f1'] = self.calculate_f1(labels[1], pred_args2, 3)
+        metric[self.categories[2] + '-f1'] = self.calculate_f1(labels[2], pred_args3, 3)
+        metric[self.categories[3] + '-f1'] = self.calculate_f1(labels[3], pred_args4, 2)
 
         decoded_predictions = []
         decoded_labels = []
@@ -71,13 +94,6 @@ class Metrics :
             decoded_label_vectors.append(label_vector)
 
         f1 = f1_score(decoded_label_vectors, decoded_prediction_vectors, average='weighted')
-        precision = precision_score(decoded_label_vectors, decoded_prediction_vectors, average='weighted')
-        recall = recall_score(decoded_label_vectors, decoded_prediction_vectors, average='weighted')
-        acc = accuracy_score(decoded_labels, decoded_predictions)
-
-        metric['f1'] = f1
-        metric['precision'] = precision
-        metric['recall'] = recall
-        metric['acc'] = acc
-
+        metric['total-f1'] = f1
+ 
         return metric

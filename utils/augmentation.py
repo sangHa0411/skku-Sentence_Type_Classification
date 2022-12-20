@@ -7,9 +7,12 @@ from tqdm import tqdm
 
 class Augmentation :
 
-    def __init__(self, min_num, reduction=0.8, eval_flag=True) :
+    def __init__(self, tokenizer, max_num, min_num, reduction=0.8, undersampling_ratio=0.7, eval_flag=True) :
+        self.tokenizer = tokenizer
+        self.max_num = max_num
         self.min_num = min_num
         self.reduction = reduction
+        self.undersampling_ratio = undersampling_ratio
         self.punct = [".", ";", "?", ":", "!", ","]
         self.eval_flag = eval_flag
 
@@ -26,14 +29,21 @@ class Augmentation :
             id_list = label_ids[l]
             previous_size = len(id_list)
 
-            if previous_size > self.min_num :                
+            if previous_size > self.min_num : 
                 if self.eval_flag :
                     augmentated_id_list = id_list
                 else :
                     sample_size = int(len(id_list) * self.reduction)
                     augmentated_id_list = random.sample(id_list, sample_size)
-                    
+
+                if len(augmentated_id_list) > self.max_num :
+                    augmentated_id_list = random.sample(
+                        augmentated_id_list, 
+                        int(len(augmentated_id_list) * self.undersampling_ratio)
+                    )
+
                 augmentated_id_list = [(a_id, 0) for a_id in augmentated_id_list]
+            
             else :
                 augmentated_id_list = [(a_id, 0) for a_id in id_list]
                 while len(id_list) < self.min_num :
@@ -85,6 +95,22 @@ class Augmentation :
         return data
 
 
+    def change(self, data) :
+        sentence = data['문장']
+        tokens = self.tokenizer.encode(sentence)[1:-1]
+
+        change_size = int(len(tokens) * 0.15)
+        
+        if change_size > 0 :
+            change_ids = random.sample(range(len(tokens)), change_size)
+            for c_id in change_ids :
+                tokens[c_id] = np.random.randint(len(tokens))
+
+            data['문장'] = self.tokenizer.decode(tokens)
+
+        return data
+
+
     def reverse(self, data) :
         sentence = data['문장']
         words = sentence.split(' ')
@@ -124,12 +150,15 @@ class Augmentation :
         if status == 0 :
             return data
         else :
-            option = np.random.randint(3)
+            option = np.random.randint(4)
             if option == 0 :
                 data = self.aeda(data)
             elif option == 1 :
                 data = self.reverse(data)
-            else :
+            elif option == 2 :
                 data = self.delete(data)
+            else :
+                data = self.change(data)
+            
             return data
 

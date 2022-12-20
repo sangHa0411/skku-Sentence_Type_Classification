@@ -14,7 +14,7 @@ class ClassificationHead(nn.Module):
             config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
         )
         self.dropout = nn.Dropout(classifier_dropout)
-        self.out_proj = nn.Linear(config.hidden_size, num_labels)
+        self.out_proj = nn.Linear(config.hidden_size, num_labels, bias=False)
 
     def forward(self, features):
         x = self.dropout(features)
@@ -23,6 +23,7 @@ class ClassificationHead(nn.Module):
         x = self.dropout(x)
         x = self.out_proj(x)
         return x
+
 
 class RobertaBaseForSequenceClassification(RobertaPreTrainedModel):
     _keys_to_ignore_on_load_missing = [r"position_ids"]
@@ -34,10 +35,10 @@ class RobertaBaseForSequenceClassification(RobertaPreTrainedModel):
         
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         
-        self.classifier1 = nn.Linear(config.hidden_size, config.category1_num_labels)
-        self.classifier2 = nn.Linear(config.hidden_size, config.category2_num_labels)
-        self.classifier3 = nn.Linear(config.hidden_size, config.category3_num_labels)
-        self.classifier4 = nn.Linear(config.hidden_size, config.category4_num_labels)
+        self.classifier1 = nn.Linear(config.hidden_size, config.category1_num_labels, bias=False)
+        self.classifier2 = nn.Linear(config.hidden_size, config.category2_num_labels, bias=False)
+        self.classifier3 = nn.Linear(config.hidden_size, config.category3_num_labels, bias=False)
+        self.classifier4 = nn.Linear(config.hidden_size, config.category4_num_labels, bias=False)
 
     def forward(
         self,
@@ -69,6 +70,7 @@ class RobertaBaseForSequenceClassification(RobertaPreTrainedModel):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
         )
+
         sequence_output = outputs[0][:, 0, :]
         sequence_output = self.dropout(sequence_output)
 
@@ -118,10 +120,10 @@ class RobertaFocalForSequenceClassification(RobertaPreTrainedModel):
         
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         
-        self.classifier1 = nn.Linear(config.hidden_size, config.category1_num_labels)
-        self.classifier2 = nn.Linear(config.hidden_size, config.category2_num_labels)
-        self.classifier3 = nn.Linear(config.hidden_size, config.category3_num_labels)
-        self.classifier4 = nn.Linear(config.hidden_size, config.category4_num_labels)
+        self.classifier1 = nn.Linear(config.hidden_size*2, config.category1_num_labels, bias=False)
+        self.classifier2 = nn.Linear(config.hidden_size*2, config.category2_num_labels, bias=False)
+        self.classifier3 = nn.Linear(config.hidden_size*2, config.category3_num_labels, bias=False)
+        self.classifier4 = nn.Linear(config.hidden_size*2, config.category4_num_labels, bias=False)
 
     def forward(
         self,
@@ -153,7 +155,13 @@ class RobertaFocalForSequenceClassification(RobertaPreTrainedModel):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
         )
-        sequence_output = outputs[0][:, 0, :]
+        sequence_output = outputs[0]
+        batch_size, _, hidden_size = sequence_output.shape
+        
+        cls_flag = input_ids == self.config.cls_token_id
+        eos_flag = input_ids == self.config.eos_token_id
+
+        sequence_output = sequence_output[cls_flag + eos_flag].view(batch_size, -1)
         sequence_output = self.dropout(sequence_output)
 
         logits1 = self.classifier1(sequence_output)

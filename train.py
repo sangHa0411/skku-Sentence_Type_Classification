@@ -27,7 +27,6 @@ from transformers import (
     AutoTokenizer,
     HfArgumentParser,
     DataCollatorWithPadding,
-    # Trainer,
 )
 
 def main():
@@ -50,6 +49,7 @@ def main():
     print("\nLoad datasets")
     file_path = os.path.join(data_args.data_dir, data_args.train_data_file)
     df = pd.read_csv(file_path)
+    df = df.drop_duplicates(subset=['문장'])
 
     label_names = list(df['label'].unique())
     label2index = {l:i for i, l in enumerate(label_names)}
@@ -82,7 +82,12 @@ def main():
     print("\nEncoding datasets")
     encoder = Encoder(tokenizer, data_args.max_length, label_dict)
     if training_args.do_eval :
-        augmentator = Augmentation(min_num=data_args.minimum_size, eval_flag=True)
+        augmentator = Augmentation(
+            tokenizer=tokenizer,
+            max_num=data_args.maximum_size, 
+            min_num=data_args.minimum_size, 
+            eval_flag=True
+        )
 
         datasets = datasets.map(encoder, batched=True, num_proc=num_proc)
         train_dataset = datasets['train']
@@ -90,13 +95,18 @@ def main():
 
         train_dataset = augmentator(train_dataset)
         datasets = DatasetDict({'train' : train_dataset, 'validation' : eval_dataset})
-        datasets = datasets.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label'])
+        datasets = datasets.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label', '__index_level_0__'])
         print(datasets)
     else :
-        augmentator = Augmentation(min_num=data_args.minimum_size, eval_flag=False)
+        augmentator = Augmentation(
+            tokenizer=tokenizer,
+            max_num=data_args.maximum_size, 
+            min_num=data_args.minimum_size, 
+            eval_flag=False
+        )
         dataset = dataset.map(encoder, batched=True, num_proc=num_proc)
         dataset = augmentator(dataset)
-        dataset = dataset.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label'])
+        dataset = dataset.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label', '__index_level_0__'])
         print(dataset)
 
     # -- Loading config & Model

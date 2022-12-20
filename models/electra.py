@@ -9,27 +9,6 @@ from transformers import ElectraPreTrainedModel, ElectraModel
 from models.output import SequenceClassifierOutput
 from transformers.activations import get_activation
 
-class ElectraClassificationHead(nn.Module):
-    """Head for sentence-level classification tasks."""
-
-    def __init__(self, config, num_labels):
-        super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
-        classifier_dropout = (
-            config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
-        )
-        self.dropout = nn.Dropout(classifier_dropout)
-        self.out_proj = nn.Linear(config.hidden_size, num_labels)
-
-    def forward(self, features):
-        x = features
-        x = self.dropout(x)
-        x = self.dense(x)
-        x = get_activation("gelu")(x) 
-        x = self.dropout(x)
-        x = self.out_proj(x)
-        return x
-
 
 class ElectraForSequenceClassification(ElectraPreTrainedModel):
     def __init__(self, config):
@@ -38,12 +17,12 @@ class ElectraForSequenceClassification(ElectraPreTrainedModel):
         self.electra = ElectraModel(config)
 
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.classifier1 = nn.Linear(config.hidden_size, config.category1_num_labels)
-        self.classifier2 = nn.Linear(config.hidden_size, config.category2_num_labels)
-        self.classifier3 = nn.Linear(config.hidden_size, config.category3_num_labels)
-        self.classifier4 = nn.Linear(config.hidden_size, config.category4_num_labels)
 
-        # Initialize weights and apply final processing
+        self.classifier1 = nn.Linear(config.hidden_size, config.category1_num_labels, bias=False)
+        self.classifier2 = nn.Linear(config.hidden_size, config.category2_num_labels, bias=False)
+        self.classifier3 = nn.Linear(config.hidden_size, config.category3_num_labels, bias=False)
+        self.classifier4 = nn.Linear(config.hidden_size, config.category4_num_labels, bias=False)
+
         self.post_init()
 
     def forward(
@@ -62,12 +41,7 @@ class ElectraForSequenceClassification(ElectraPreTrainedModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple[torch.Tensor], SequenceClassifierOutput]:
-        r"""
-        labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
-            Labels for computing the sequence classification/regression loss. Indices should be in `[0, ...,
-            config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If
-            `config.num_labels > 1` a classification loss is computed (Cross-Entropy).
-        """
+
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         outputs = self.electra(
@@ -91,13 +65,13 @@ class ElectraForSequenceClassification(ElectraPreTrainedModel):
         loss = None
         loss1, loss2, loss3, loss4 = None, None, None, None
         if labels1 is not None and labels2 is not None and labels3 is not None and labels4 is not None:
-            loss_fct = FocalLoss(gamma=1, alpha=0.25)
+            loss_fct = nn.CrossEntropyLoss()
             loss1 = loss_fct(logits1.view(-1, self.config.category1_num_labels), labels1.view(-1))
             loss2 = loss_fct(logits2.view(-1, self.config.category2_num_labels), labels2.view(-1))
             loss3 = loss_fct(logits3.view(-1, self.config.category3_num_labels), labels3.view(-1))
             loss4 = loss_fct(logits4.view(-1, self.config.category4_num_labels), labels4.view(-1))
 
-            loss = loss1 + loss2 + loss3 + loss4
+            loss = (loss1 + loss2 + loss3 + loss4) / 4
 
         if not return_dict:
             output = (logits1, logits2, logits3, logits4, ) + outputs[2:]
