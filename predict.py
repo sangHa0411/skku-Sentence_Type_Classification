@@ -35,8 +35,19 @@ def main():
 
     # -- Loading datasets
     print("\nLoad datasets")
+    file_path = os.path.join(data_args.data_dir, data_args.train_data_file)
+    train_df = pd.read_csv(file_path)
+    train_df = train_df.drop_duplicates(subset=['문장'])
+
+    label_names = list(train_df['label'].unique())
+    label_dict = {i:l for i, l in enumerate(label_names)}
+
     file_path = os.path.join(data_args.data_dir, inference_args.test_data_file)
     df = pd.read_csv(file_path)
+    test_size = len(df)
+
+    label_names = list(df['label'].unique())
+    label_dict = {i:l for i, l in enumerate(label_names)}
 
     # -- Parsing datasets
     print("\nParse dataset")   
@@ -80,29 +91,13 @@ def main():
     )
 
     # -- Prediction
-    prediction_logits = trainer.predict(test_dataset=dataset)[0]
-
-    pred_args1 = prediction_logits[0].argmax(-1)
-    pred_args2 = prediction_logits[1].argmax(-1)
-    pred_args3 = prediction_logits[2].argmax(-1)
-    pred_args4 = prediction_logits[3].argmax(-1)
+    prediction_logits = trainer.predict(test_dataset=dataset)
+    pred_args = prediction_logits.predictions.argmax(-1)
 
     # -- Postprocess
-    label_dict = {
-        '유형' : {0 : '사실형', 1 : '추론형', 2 : '대화형', 3 : '예측형'},
-        '극성' : {0 : '긍정', 1 : '부정', 2 : '미정'},
-        '시제' : {0 : '과거', 1 : '현재', 2 : '미래'},
-        '확실성' : {0 : '확실', 1 : '불확실'},
-    }
-
     labels = []
-    test_size = len(dataset['input_ids'])
     for i in tqdm(range(test_size)) :
-        decoded_string = label_dict['유형'][pred_args1[i]] + '-' + \
-            label_dict['극성'][pred_args2[i]] + '-' + \
-            label_dict['시제'][pred_args3[i]] + '-' + \
-            label_dict['확실성'][pred_args4[i]]
-
+        decoded_string = label_dict[pred_args[i]]
         labels.append(decoded_string)
 
     # -- Submission

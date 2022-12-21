@@ -3,7 +3,6 @@ import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss
 from models.loss import FocalLoss
-from models.output import SequenceClassifierOutput
 from transformers.modeling_outputs import SequenceClassifierOutput
 from transformers.models.roberta.modeling_roberta import RobertaPreTrainedModel, RobertaModel
 
@@ -198,8 +197,6 @@ class RobertaVsatckForSequenceClassification(RobertaPreTrainedModel):
         sequence_output = hidden_states[-1] * 0.6 + \
             hidden_states[-2] * 0.3 + \
             hidden_states[-3] * 0.1
-
-        # sequence_output = outputs[0][:, 0, :]
 
         sequence_output = sequence_output[:, 0, :]
         sequence_output = self.dropout(sequence_output)

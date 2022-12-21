@@ -23,6 +23,7 @@ python train.py \
 --minimum_size 20 \
 --maximum_size 3000
 
+
 ## Electra
 python train.py \
 --do_eval \
@@ -55,7 +56,7 @@ python train.py \
 --max_length 128 \
 --output_dir exps/model1 \
 --data_dir data \
---model_name RobertaBaseForSequenceClassification \
+--model_name RobertaSpecialTokenForSequenceClassification \
 --train_data_file train.csv \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
@@ -63,10 +64,10 @@ python train.py \
 --logging_steps 100 \
 --evaluation_strategy no \
 --save_strategy steps \
---learning_rate 7e-6 \
+--learning_rate 3e-5 \
 --warmup_ratio 0.05 \
 --weight_decay 1e-3 \
---minimum_size 30 \
+--minimum_size 20 \
 --maximum_size 3000
 
 
@@ -76,7 +77,7 @@ python train.py \
 --max_length 128 \
 --output_dir exps/model2 \
 --data_dir data \
---model_name RobertaBaseForSequenceClassification \
+--model_name RobertaSpecialTokenForSequenceClassification \
 --train_data_file train.csv \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
@@ -84,10 +85,10 @@ python train.py \
 --logging_steps 100 \
 --evaluation_strategy no \
 --save_strategy steps \
---learning_rate 7e-6 \
+--learning_rate 3e-5 \
 --warmup_ratio 0.05 \
 --weight_decay 1e-3 \
---minimum_size 30 \
+--minimum_size 20 \
 --maximum_size 3000
 
 
@@ -97,7 +98,7 @@ python train.py \
 --max_length 128 \
 --output_dir exps/model3 \
 --data_dir data \
---model_name RobertaBaseForSequenceClassification \
+--model_name RobertaSpecialTokenForSequenceClassification \
 --train_data_file train.csv \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
@@ -105,10 +106,10 @@ python train.py \
 --logging_steps 100 \
 --evaluation_strategy no \
 --save_strategy steps \
---learning_rate 7e-6 \
+--learning_rate 3e-5 \
 --warmup_ratio 0.05 \
 --weight_decay 1e-3 \
---minimum_size 30 \
+--minimum_size 20 \
 --maximum_size 3000
 
 
@@ -118,7 +119,7 @@ python train.py \
 --max_length 128 \
 --output_dir exps/model4 \
 --data_dir data \
---model_name RobertaBaseForSequenceClassification \
+--model_name RobertaSpecialTokenForSequenceClassification \
 --train_data_file train.csv \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
@@ -126,10 +127,10 @@ python train.py \
 --logging_steps 100 \
 --evaluation_strategy no \
 --save_strategy steps \
---learning_rate 7e-6 \
+--learning_rate 3e-5 \
 --warmup_ratio 0.05 \
 --weight_decay 1e-3 \
---minimum_size 30 \
+--minimum_size 20 \
 --maximum_size 3000
 
 
@@ -139,7 +140,7 @@ python train.py \
 --max_length 128 \
 --output_dir exps/model5 \
 --data_dir data \
---model_name RobertaBaseForSequenceClassification \
+--model_name RobertaSpecialTokenForSequenceClassification \
 --train_data_file train.csv \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
@@ -147,10 +148,10 @@ python train.py \
 --logging_steps 100 \
 --evaluation_strategy no \
 --save_strategy steps \
---learning_rate 7e-6 \
+--learning_rate 3e-5 \
 --warmup_ratio 0.05 \
 --weight_decay 1e-3 \
---minimum_size 30 \
+--minimum_size 20 \
 --maximum_size 3000
 
 # ## Model2
@@ -215,9 +216,10 @@ python train.py \
 # Ensemble
 python ensemble.py \
 --data_dir data \
+--train_data_file train.csv \
 --test_data_file test.csv \
 --max_length 128 \
 --per_device_eval_batch_size 16 \
 --submission_data_file sample_submission.csv \
 --save_dir results \
---save_file_name 2022-12-21-02.csv
+--save_file_name 2022-12-21-03.csv
