@@ -9,6 +9,7 @@ import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
 from trainer import Trainer
+from models.loss import FocalLoss
 from utils.metrics import Metrics
 from utils.encoder import Encoder
 from utils.seperator import Seperator
@@ -157,24 +158,30 @@ def main():
     )
     wandb.config.update(training_args)
 
+    loss_fn = nn.CrossEntropyLoss() if training_args.loss_fn == 'crossentropy' else FocalLoss(alpha=0.25, gamma=1)
+
     # -- Trainer
     if training_args.do_eval :
-        trainer = Trainer(
+        trainer = trainer_class(
             model,
             training_args,
             train_dataset=datasets['train'],
             eval_dataset=datasets['validation'],
             data_collator=data_collator,
             tokenizer=tokenizer,
-            compute_metrics=compute_metrics
+            compute_metrics=compute_metrics,
+            loss_fn=loss_fn,
+            rdrop_flag=training_args.rdrop
         )
     else :
-        trainer = Trainer(
+        trainer = trainer_class(
             model,
             training_args,
             train_dataset=dataset,
             data_collator=data_collator,
             tokenizer=tokenizer,
+            loss_fn=loss_fn,
+            rdrop_flag=training_args.rdrop
         )
 
     print('\nTraining')

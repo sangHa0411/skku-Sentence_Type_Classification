@@ -40,10 +40,8 @@ class StratifiedSampler(Sampler[int]):
             return len(self.data_source)
         return self._num_samples
 
-    def get_label_indices(self, data_socre) :
-
+    def get_label_indices(self, labels) :
         label_indices = collections.defaultdict(list)
-        labels = data_socre['labels']
         
         total_size = len(labels)
         for i in range(total_size) :
@@ -53,12 +51,7 @@ class StratifiedSampler(Sampler[int]):
         for l in label_indices :
             random.shuffle(label_indices[l])
 
-        label_batch_size = {}
-        for l in label_indices :
-            sub_label_size = int(self.batch_size * (len(label_indices[l]) / total_size))
-            label_batch_size[l] = sub_label_size
-
-        return label_indices, label_batch_size 
+        return label_indices 
 
     def __iter__(self) -> Iterator[int]:
         n = len(self.data_source)
@@ -70,10 +63,15 @@ class StratifiedSampler(Sampler[int]):
             generator = self.generator
 
         total_size = len(self.data_source['labels'])
-        label_indices, label_batch_size = self.get_label_indices(self.data_source)
+        labels = self.data_source['labels']
+        label_indices = self.get_label_indices(labels)
 
-        major_label_indices = []
-        minor_label_indices = []
+        label_batch_sizes = {}
+        for l in label_indices :
+            l_indices = label_indices[l]
+            label_batch_sizes[l] = (len(l_indices) / total_size) * self.batch_size
+
+        breakpoint()
 
         for l in label_batch_size :
             if label_batch_size[l] > 1 :
@@ -85,32 +83,7 @@ class StratifiedSampler(Sampler[int]):
         random.shuffle(minor_label_indices)
 
         sampled = []
-        iter_size = total_size // self.batch_size
-        major_batch_size = len(major_label_indices) // iter_size
-        minor_batch_size = len(minor_label_indices) // iter_size 
-        
-        for i in range(iter_size) :
-            sub_sampled = []
 
-            if major_batch_size*i < len(major_label_indices) :
-                sub_sampled.extend(major_label_indices[major_batch_size*i:major_batch_size*(i+1)])
-
-            if minor_batch_size*i < len(minor_label_indices) :
-                sub_sampled.extend(minor_label_indices[minor_batch_size*i:minor_batch_size*(i+1)])
-
-            random.shuffle(sub_sampled)
-            sampled.extend(sub_sampled)
-
-        remain_ids = []
-        if major_batch_size * iter_size < len(major_label_indices) :
-            remain_ids.extend(major_label_indices[major_batch_size*iter_size:])
-
-        if minor_batch_size * iter_size < len(minor_label_indices) :
-            remain_ids.extend(minor_label_indices[minor_batch_size*iter_size:])
-        
-        if len(remain_ids) > 0 :
-            random.shuffle(remain_ids)
-            sampled.extend(remain_ids)
 
         yield from sampled
 

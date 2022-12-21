@@ -23,20 +23,19 @@ from transformers import (
     Trainer,
 )
 
-ENSEMBLE_SIZE = 5
-MODEL_NAMES = [
-    'RobertaSpecialTokenForSequenceClassification',
-    'RobertaSpecialTokenForSequenceClassification',
-    'RobertaSpecialTokenForSequenceClassification',
-    'RobertaSpecialTokenForSequenceClassification',
-    'RobertaSpecialTokenForSequenceClassification',
-]
+ENSEMBLE_SIZE = 10
+MODEL_NAME = 'RobertaSpecialTokenForSequenceClassification'
 MODEL_PATHS = [
     './exps/model1',
     './exps/model2',
     './exps/model3',
     './exps/model4',
     './exps/model5',
+    './exps/model6',
+    './exps/model7',
+    './exps/model8',
+    './exps/model9',
+    './exps/model10',
 ]
 
 
@@ -51,20 +50,19 @@ def main():
     num_proc = int(cpu_cores // 2)
     training_args.dataloader_num_workers = num_proc
 
-    # -- Loading datasets
+    # -- Loading train datasets
     print("\nLoad datasets")
     file_path = os.path.join(data_args.data_dir, data_args.train_data_file)
     train_df = pd.read_csv(file_path)
     train_df = train_df.drop_duplicates(subset=['문장'])
 
+    # -- Label Tags
     label_names = list(train_df['label'].unique())
     label_dict = {i:l for i, l in enumerate(label_names)}
-
+    
+    # -- Loading test dataset
     file_path = os.path.join(data_args.data_dir, inference_args.test_data_file)
     df = pd.read_csv(file_path)
-
-    # -- Label Tag
-    label_dict = {i:l for i, l in enumerate(label_names)}
 
     # -- Parsing datasets
     print("\nParse dataset")   
@@ -76,7 +74,7 @@ def main():
     predictions_list = []
     
     for i in range(ENSEMBLE_SIZE) :
-        model_name = MODEL_NAMES[i]
+        model_name = MODEL_NAME
         model_path = MODEL_PATHS[i]
 
         # -- Encoding datasets
@@ -87,7 +85,7 @@ def main():
         dataset = dataset.map(encoder, batched=True, num_proc=num_proc)
         print(dataset)
     
-        # -- Loading Model
+        # -- Loading Config
         config = AutoConfig.from_pretrained(model_path)
 
         if 'roberta' in model_name.lower() :
@@ -97,6 +95,7 @@ def main():
         elif 't5' in model_name.lower() :
             model_category = importlib.import_module('models.t5')
 
+        # -- Loading Model
         model_class = getattr(model_category, model_name)
         model = model_class.from_pretrained(model_path, config=config)
 
@@ -122,7 +121,7 @@ def main():
 
         predictions_list.append(prediction_probs)
 
-    # -- Selecting arguments
+    # -- Soft Voting
     predictions = np.mean(predictions_list, axis=0)
     pred_args = predictions.argmax(-1)
 

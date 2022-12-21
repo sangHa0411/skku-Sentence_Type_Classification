@@ -66,6 +66,18 @@ class TrainingArguments(TrainingArguments):
             "help": "model output directory"
         }
     )
+    rdrop: bool = field(
+        default=False,
+        metadata={
+            "help": "rdrop training"
+        }
+    )
+    loss_fn: str = field(
+        default="crossentropy",
+        metadata={
+            "help": "training loss"
+        }
+    )
 
 @dataclass
 class LoggingArguments:

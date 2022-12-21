@@ -2,23 +2,18 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from models.loss import FocalLoss
 from transformers import Trainer
 from typing import Dict, List, Any, Union, Tuple, Optional
 from transformers.trainer_pt_utils import nested_detach
-from utils.sampler import StratifiedSampler
 
 class Trainer(Trainer) :
 
-    # def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
+    def __init__(self, *args, loss_fn, rdrop_flag, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.loss_fn = loss_fn
+        self.rdrop_flag = rdrop_flag
 
-    #     generator = torch.Generator()
-    #     seed = int(torch.empty((), dtype=torch.int64).random_().item())
-    #     generator.manual_seed(seed)
-
-    #     seed = self.args.data_seed if self.args.data_seed is not None else self.args.seed
-    #     train_batch_size = self.args.per_device_train_batch_size
-    #     return StratifiedSampler(self.train_dataset, batch_size=train_batch_size, generator=generator)
-        
     # KL-Divergence Loss 계산하는 코드
     def get_kl_loss(self, loss_fn, logits_1, logits_2, alpha=1) :
         loss_kl_1 = loss_fn(F.log_softmax(logits_1, dim=-1), F.softmax(logits_2, dim=-1))
@@ -29,31 +24,39 @@ class Trainer(Trainer) :
     def compute_loss(self, model, inputs):
         num_labels = model.config.num_labels
 
-        input_names = inputs.keys()
-        batch_size = inputs['input_ids'].shape[0]
-        labels = inputs.pop('labels')
+        if self.rdrop_flag :
+            input_names = inputs.keys()
+            batch_size = inputs['input_ids'].shape[0]
+            labels = inputs.pop('labels')
 
-        # 같은 입력을 2개 concat한다.
-        for input_name in input_names :
-            batch = inputs[input_name]
-            inputs[input_name] = torch.cat([batch, batch], dim=0)
+            # 같은 입력을 2개 concat한다.
+            for input_name in input_names :
+                batch = inputs[input_name]
+                inputs[input_name] = torch.cat([batch, batch], dim=0)
 
-        # 출력을 구한다.
-        outputs = model(**inputs)
+            # 출력을 구한다.
+            outputs = model(**inputs)
 
-        # 앞서 concat 한 부분을 나눈다.
-        batch_logits_1 = outputs.logits[:batch_size, :]
-        batch_logits_2 = outputs.logits[batch_size:, :]
+            # 앞서 concat 한 부분을 나눈다.
+            batch_logits_1 = outputs.logits[:batch_size, :]
+            batch_logits_2 = outputs.logits[batch_size:, :]
 
-        # 각 부분에 대해서 cross entropy loss의 평균을 구한다.
-        loss_fct_1 = nn.CrossEntropyLoss()
-        loss_nll = (loss_fct_1(batch_logits_1.view(-1, num_labels), labels.view(-1)) + \
-            loss_fct_1(batch_logits_2.view(-1, num_labels), labels.view(-1))) / 2
+            # 각 부분에 대해서 cross entropy loss의 평균을 구한다.            
+            loss_fct_1 = self.loss_fn
+            loss_nll = (
+                loss_fct_1(batch_logits_1.view(-1, num_labels), labels.view(-1)) + \
+                loss_fct_1(batch_logits_2.view(-1, num_labels), labels.view(-1))
+            ) / 2
 
-        # 두 부분의 logit 분포 차이가 적어질 수 있게 KL-Divergence Loss 구한다.
-        loss_fct_2 = nn.KLDivLoss(reduction='batchmean')
-        loss_kl = self.get_kl_loss(loss_fct_2, batch_logits_1, batch_logits_2)
-        return loss_nll + loss_kl
+            # 두 부분의 logit 분포 차이가 적어질 수 있게 KL-Divergence Loss 구한다.
+            loss_fct_2 = nn.KLDivLoss(reduction='batchmean')
+            loss_kl = self.get_kl_loss(loss_fct_2, batch_logits_1, batch_logits_2)
+
+            loss = loss_nll + loss_kl
+        else :
+            loss = self.compute_eval_loss(model, inputs)
+
+        return loss
 
     # Validation 할 때 Loss를 구하기 위한 코드
     def compute_eval_loss(self, model, inputs, return_outputs=False):
