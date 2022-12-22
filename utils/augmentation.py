@@ -95,7 +95,7 @@ class Augmentation :
     def aeda(self, data) :
         sentence = data['문장']
         # 구두점 삽입 횟수
-        insert_size = np.random.randint(1, len(sentence) // 3)
+        insert_size = np.random.randint(1, len(sentence) // 5)
         
         chars = list(sentence)
         while insert_size > 0 :

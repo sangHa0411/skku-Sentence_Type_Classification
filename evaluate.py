@@ -30,17 +30,19 @@ from transformers import (
     Trainer,
 )
 
-ENSEMBLE_SIZE = 1
+ENSEMBLE_SIZE = 4
 MODEL_NAMES = [
     'RobertaSpecialTokenForSequenceClassification',
-    'T5EncoderForSequenceClassification',
     'RobertaSpecialTokenForSequenceClassification',
+    'ElectraForSequenceClassification',
+    'T5EncoderForSequenceClassification',
 ]
 
 MODEL_PATHS = [
-    './exps/model6',
-    './exps/model8',
     './exps/model5',
+    './exps/model6',
+    './exps/model7',
+    './exps/model8',
 ]
 
 

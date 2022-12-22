@@ -69,21 +69,57 @@ class StratifiedSampler(Sampler[int]):
         label_batch_sizes = {}
         for l in label_indices :
             l_indices = label_indices[l]
-            label_batch_sizes[l] = (len(l_indices) / total_size) * self.batch_size
+            label_batch_sizes[l] = len(l_indices)
 
-        breakpoint()
+        label_items = sorted(label_batch_sizes.items(), key=lambda x : x[1], reverse=True)
+        iter_size = total_size // self.batch_size
 
-        for l in label_batch_size :
-            if label_batch_size[l] > 1 :
-                major_label_indices.extend(label_indices[l])
-            else :
-                minor_label_indices.extend(label_indices[l])
+        item1 = label_items[0][0]
+        item1_size = len(label_indices[item1])
+        item1_batch_size = item1_size // iter_size
+        item1_indices = label_indices[item1]
 
-        random.shuffle(major_label_indices)
-        random.shuffle(minor_label_indices)
+        item2 = label_items[1][0]
+        item2_size = len(label_indices[item2])
+        item2_batch_size = item2_size // iter_size
+        item2_indices = label_indices[item2]
+
+        item3_size = total_size - (item1_size + item2_size)
+        item3_batch_size = item3_size // iter_size
+        item3_indices = []
+        for l in label_indices :
+            if l != item1 and l != item2 :
+                item3_indices.extend(label_indices[l])
+        random.shuffle(item3_indices)
 
         sampled = []
+        for i in range(iter_size) :
+            sub_sampled = []
 
+            indices = item1_indices[i*item1_batch_size:(i+1)*item1_batch_size]
+            if len(indices) > 0 :
+                sub_sampled.extend(indices)
+
+            indices = item2_indices[i*item2_batch_size:(i+1)*item2_batch_size]
+            if len(indices) > 0 :
+                sub_sampled.extend(indices)
+    
+            indices = item3_indices[i*item3_batch_size:(i+1)*item3_batch_size]
+            if len(indices) > 0 :
+                sub_sampled.extend(indices)
+
+            random.shuffle(sub_sampled)
+            sampled.extend(sub_sampled)
+
+        remain_ids = []
+
+        remain_ids.extend(item1_indices[item1_batch_size*iter_size:])
+        remain_ids.extend(item2_indices[item2_batch_size*iter_size:])
+        remain_ids.extend(item3_indices[item3_batch_size*iter_size:])
+
+        if len(remain_ids) > 0 :
+            random.shuffle(remain_ids)
+            sampled.extend(remain_ids)
 
         yield from sampled
 

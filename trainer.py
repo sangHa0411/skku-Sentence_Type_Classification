@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from utils.sampler import StratifiedSampler
 from models.loss import FocalLoss
 from transformers import Trainer
 from typing import Dict, List, Any, Union, Tuple, Optional
@@ -14,11 +15,24 @@ class Trainer(Trainer) :
         self.loss = loss
         self.rdrop_flag = rdrop_flag
 
+
+    def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
+
+        generator = torch.Generator()
+        seed = int(torch.empty((), dtype=torch.int64).random_().item())
+        generator.manual_seed(seed)
+
+        seed = self.args.data_seed if self.args.data_seed is not None else self.args.seed
+        train_batch_size = self.args.per_device_train_batch_size
+        return StratifiedSampler(self.train_dataset, batch_size=train_batch_size, generator=generator)
+
+
     # KL-Divergence Loss 계산하는 코드
     def get_kl_loss(self, loss_fn, logits_1, logits_2, alpha=1) :
         loss_kl_1 = loss_fn(F.log_softmax(logits_1, dim=-1), F.softmax(logits_2, dim=-1))
         loss_kl_2 = loss_fn(F.log_softmax(logits_2, dim=-1), F.softmax(logits_1, dim=-1))
         return alpha * (loss_kl_1 + loss_kl_2) / 2
+
 
     # 최적화 부분 : R-Drop을 이용해서 Loss를 계산한다. (Train 할 때만)
     def compute_loss(self, model, inputs):
@@ -46,7 +60,7 @@ class Trainer(Trainer) :
             loss_nll = (
                 loss_fct_1(batch_logits_1.view(-1, num_labels), labels.view(-1)) + \
                 loss_fct_1(batch_logits_2.view(-1, num_labels), labels.view(-1))
-            ) / 2
+            )
 
             # 두 부분의 logit 분포 차이가 적어질 수 있게 KL-Divergence Loss 구한다.
             loss_fct_2 = nn.KLDivLoss(reduction='batchmean')
@@ -57,6 +71,7 @@ class Trainer(Trainer) :
             loss = self.compute_eval_loss(model, inputs)
 
         return loss
+
 
     # Validation 할 때 Loss를 구하기 위한 코드
     def compute_eval_loss(self, model, inputs, return_outputs=False):
@@ -77,58 +92,59 @@ class Trainer(Trainer) :
             loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
         return (loss, outputs) if return_outputs else loss
 
+
     # Huggingface Validation & Prediction Code
     def prediction_step(
-            self,
-            model: nn.Module,
-            inputs: Dict[str, Union[torch.Tensor, Any]],
-            prediction_loss_only: bool,
-            ignore_keys: Optional[List[str]] = None,
-        ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor], Optional[torch.Tensor]]:
+        self,
+        model: nn.Module,
+        inputs: Dict[str, Union[torch.Tensor, Any]],
+        prediction_loss_only: bool,
+        ignore_keys: Optional[List[str]] = None,
+    ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor], Optional[torch.Tensor]]:
 
-            has_labels = all(inputs.get(k) is not None for k in self.label_names)
-            inputs = self._prepare_inputs(inputs)
-            if ignore_keys is None:
-                if hasattr(self.model, "config"):
-                    ignore_keys = getattr(self.model.config, "keys_to_ignore_at_inference", [])
-                else:
-                    ignore_keys = []
-
-            # labels may be popped when computing the loss (label smoothing for instance) so we grab them first.
-            if has_labels:
-                labels = nested_detach(tuple(inputs.get(name) for name in self.label_names))
-                if len(labels) == 1:
-                    labels = labels[0]
+        has_labels = all(inputs.get(k) is not None for k in self.label_names)
+        inputs = self._prepare_inputs(inputs)
+        if ignore_keys is None:
+            if hasattr(self.model, "config"):
+                ignore_keys = getattr(self.model.config, "keys_to_ignore_at_inference", [])
             else:
-                labels = None
+                ignore_keys = []
 
-            with torch.no_grad():               
-                if has_labels:
-                    with self.autocast_smart_context_manager():
-                        loss, outputs = self.compute_eval_loss(model, inputs, return_outputs=True)
-                    loss = loss.mean().detach()
+        # labels may be popped when computing the loss (label smoothing for instance) so we grab them first.
+        if has_labels:
+            labels = nested_detach(tuple(inputs.get(name) for name in self.label_names))
+            if len(labels) == 1:
+                labels = labels[0]
+        else:
+            labels = None
 
-                    if isinstance(outputs, dict):
-                        logits = tuple(v for k, v in outputs.items() if k not in ignore_keys + ["loss"])
-                    else:
-                        logits = outputs[1:]
+        with torch.no_grad():               
+            if has_labels:
+                with self.autocast_smart_context_manager():
+                    loss, outputs = self.compute_eval_loss(model, inputs, return_outputs=True)
+                loss = loss.mean().detach()
+
+                if isinstance(outputs, dict):
+                    logits = tuple(v for k, v in outputs.items() if k not in ignore_keys + ["loss"])
                 else:
-                    loss = None
-                    with self.autocast_smart_context_manager():
-                        outputs = model(**inputs)
-                    if isinstance(outputs, dict):
-                        logits = tuple(v for k, v in outputs.items() if k not in ignore_keys)
-                    else:
-                        logits = outputs
-                    # TODO: this needs to be fixed and made cleaner later.
-                    if self.args.past_index >= 0:
-                        self._past = outputs[self.args.past_index - 1]
+                    logits = outputs[1:]
+            else:
+                loss = None
+                with self.autocast_smart_context_manager():
+                    outputs = model(**inputs)
+                if isinstance(outputs, dict):
+                    logits = tuple(v for k, v in outputs.items() if k not in ignore_keys)
+                else:
+                    logits = outputs
+                # TODO: this needs to be fixed and made cleaner later.
+                if self.args.past_index >= 0:
+                    self._past = outputs[self.args.past_index - 1]
 
-            if prediction_loss_only:
-                return (loss, None, None)
+        if prediction_loss_only:
+            return (loss, None, None)
 
-            logits = nested_detach(logits)
-            if len(logits) == 1:
-                logits = logits[0]
+        logits = nested_detach(logits)
+        if len(logits) == 1:
+            logits = logits[0]
 
-            return (loss, logits, labels)
+        return (loss, logits, labels)
