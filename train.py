@@ -192,8 +192,7 @@ def main():
         eval_log = trainer.evaluate()
         print(eval_log)
 
-    if training_args.do_eval == False :
-        trainer.save_model(training_args.output_dir)
+    trainer.save_model(training_args.output_dir)
     wandb.finish()
 
 

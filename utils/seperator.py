@@ -32,6 +32,9 @@ class Seperator :
             else :
                 train_ids.extend(id_list)
 
+        random.shuffle(train_ids)
+        random.shuffle(validation_ids)
+
         train_dset = org_dataset.select(train_ids)
         validation_dset = org_dataset.select(validation_ids)
 

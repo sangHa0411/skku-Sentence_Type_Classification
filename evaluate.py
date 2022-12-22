@@ -1,4 +1,6 @@
 import os
+import random
+import torch
 import importlib
 import numpy as np
 import pandas as pd
@@ -28,19 +30,17 @@ from transformers import (
     Trainer,
 )
 
-ENSEMBLE_SIZE = 4
+ENSEMBLE_SIZE = 1
 MODEL_NAMES = [
     'RobertaSpecialTokenForSequenceClassification',
-    'RobertaSpecialTokenForSequenceClassification',
-    'ElectraForSequenceClassification',
     'T5EncoderForSequenceClassification',
+    'RobertaSpecialTokenForSequenceClassification',
 ]
 
 MODEL_PATHS = [
-    './exps/model5',
-    './exps/model6/checkpoint-2000',
-    './exps/model7',
+    './exps/model6',
     './exps/model8',
+    './exps/model5',
 ]
 
 
@@ -52,7 +52,8 @@ def main():
         (DataTrainingArguments, TrainingArguments, InferenceArguments)
     )
     data_args, training_args, inference_args = parser.parse_args_into_dataclasses()
-
+    seed_everything(training_args.seed)
+    
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
     num_proc = int(cpu_cores // 2)
@@ -71,14 +72,12 @@ def main():
     # -- Seperating validation datasets
     seperator = Seperator(validation_ratio=data_args.validation_ratio)
     datasets = seperator(train_df)
-
-    # -- Labels
     validation_dataset = datasets['validation']
-    labels = validation_dataset['label']
-    labels = np.array([label_dict[l] for l in labels])
+
+    labels = np.array([label_dict[l] for l in validation_dataset['label']])
+    validation_dataset = validation_dataset.remove_columns(['label'])
 
     # -- Remove label compumns
-    validation_dataset = validation_dataset.remove_columns(['label'])
     print(validation_dataset)
 
     predictions_list = []
@@ -140,6 +139,18 @@ def main():
     eval_logs = metrics.compute_metrics(eval_preds)
 
     print(eval_logs)
+
+def seed_everything(seed):
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seed)
+    np.random.default_rng(seed)
+    random.seed(seed)
+
 
 if __name__ == "__main__":
     main()
