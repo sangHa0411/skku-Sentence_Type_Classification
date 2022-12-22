@@ -131,8 +131,7 @@ class RobertaSpecialTokenForSequenceClassification(RobertaPreTrainedModel):
         eos_flag = input_ids == self.config.eos_token_id
 
         sequence_output = sequence_output[cls_flag + eos_flag].view(batch_size, -1)
-        sequence_output = self.dropout(sequence_output)
-
+        
         logits = self.classifier(sequence_output)
 
         loss = None

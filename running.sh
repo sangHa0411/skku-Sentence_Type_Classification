@@ -1,6 +1,5 @@
 # Training & Evaluation
-## Roberta Model
-### Model 1 : Cross Entropy (R-Drop) / last checkpoint - 75.36
+## Model 1
 python train.py \
 --do_eval \
 --seed 42 \
@@ -9,16 +8,17 @@ python train.py \
 --validation_ratio 0.2 \
 --max_length 128 \
 --rdrop True \
---output_dir exps/test \
+--output_dir exps/model5 \
 --data_dir data \
 --train_data_file train.csv \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
 --per_device_eval_batch_size 16 \
 --eval_steps 500 \
+--save_steps 500 \
 --logging_steps 100 \
 --evaluation_strategy steps \
---save_strategy no \
+--save_strategy steps \
 --learning_rate 3e-5 \
 --warmup_ratio 0.05 \
 --weight_decay 1e-3 \
@@ -26,7 +26,7 @@ python train.py \
 --maximum_size 3000
 
 
-### Model 2 : Focal Loss 2000 checkpoint - 75.8
+## Model 2
 python train.py \
 --do_eval \
 --seed 42 \
@@ -34,7 +34,60 @@ python train.py \
 --model_name RobertaForSequenceClassification \
 --validation_ratio 0.2 \
 --max_length 128 \
---output_dir exps/test \
+--output_dir exps/model6 \
+--data_dir data \
+--rdrop True \
+--loss_fn focal \
+--train_data_file train.csv \
+--num_train_epochs 3 \
+--per_device_train_batch_size 16 \
+--per_device_eval_batch_size 16 \
+--eval_steps 500 \
+--save_steps 500 \
+--logging_steps 100 \
+--evaluation_strategy steps \
+--save_strategy steps \
+--learning_rate 3e-5 \
+--warmup_ratio 0.05 \
+--weight_decay 1e-3 \
+--minimum_size 25 \
+--maximum_size 3000
+
+## Model 3 
+python train.py \
+--do_eval \
+--seed 42 \
+--PLM tunib/electra-ko-base \
+--model_name ElectraForSequenceClassification \
+--validation_ratio 0.2 \
+--max_length 128 \
+--output_dir exps/model7 \
+--data_dir data \
+--train_data_file train.csv \
+--num_train_epochs 3 \
+--per_device_train_batch_size 16 \
+--per_device_eval_batch_size 16 \
+--eval_steps 500 \
+--save_steps 500 \
+--logging_steps 100 \
+--evaluation_strategy steps \
+--save_strategy steps \
+--learning_rate 5e-5 \
+--weight_decay 1e-3 \
+--warmup_ratio 0.05 \
+--minimum_size 10 \
+--maximum_size 3000
+
+
+## Model 4
+python train.py \
+--do_eval \
+--seed 42 \
+--PLM KETI-AIR/ke-t5-large-ko \
+--model_name T5EncoderForSequenceClassification \
+--validation_ratio 0.2 \
+--max_length 128 \
+--output_dir exps/model8 \
 --data_dir data \
 --rdrop True \
 --train_data_file train.csv \
@@ -42,211 +95,75 @@ python train.py \
 --per_device_train_batch_size 16 \
 --per_device_eval_batch_size 16 \
 --eval_steps 500 \
+--save_steps 500 \
 --logging_steps 100 \
 --evaluation_strategy steps \
---save_strategy no \
---learning_rate 3e-5 \
---warmup_ratio 0.05 \
---weight_decay 1e-3 \
---minimum_size 25 \
---maximum_size 3000
-
-## Electra
-### Model 3 : CrossEntropyLoss 
-python train.py \
---do_eval \
---seed 42 \
---PLM tunib/electra-ko-base \
---model_name ElectraVStackSequenceClassification \
---validation_ratio 0.2 \
---max_length 128 \
---output_dir exps/test \
---data_dir data \
---train_data_file train.csv \
---num_train_epochs 3 \
---per_device_train_batch_size 16 \
---per_device_eval_batch_size 16 \
---eval_steps 500 \
---logging_steps 100 \
---evaluation_strategy steps \
---save_strategy no \
---learning_rate 5e-5 \
---weight_decay 1e-3 \
---warmup_ratio 0.05 \
---minimum_size 20 \
---maximum_size 3000
-
-
-## T5
-### Model 3 : CrossEntropyLoss 
-python train.py \
---do_eval \
---seed 42 \
---PLM KETI-AIR/ke-t5-large-ko \
---model_name T5EncoderArcFaceForSequenceClassification \
---validation_ratio 0.2 \
---max_length 128 \
---output_dir exps/test \
---data_dir data \
---train_data_file train.csv \
---num_train_epochs 3 \
---per_device_train_batch_size 16 \
---per_device_eval_batch_size 16 \
---eval_steps 500 \
---logging_steps 100 \
---evaluation_strategy steps \
---save_strategy no \
---learning_rate 5e-5 \
---weight_decay 1e-3 \
---warmup_ratio 0.05 \
---minimum_size 20 \
---maximum_size 3000
-
-
-
-# Full Training
-## Model1
-python train.py \
---PLM klue/roberta-large \
---seed 1 \
---max_length 128 \
---output_dir exps/model1 \
---data_dir data \
---model_name RobertaSpecialTokenForSequenceClassification \
---train_data_file train.csv \
---num_train_epochs 3 \
---per_device_train_batch_size 16 \
---save_steps 500 \
---logging_steps 100 \
---evaluation_strategy no \
 --save_strategy steps \
---learning_rate 3e-5 \
---warmup_ratio 0.05 \
+--learning_rate 1e-4 \
 --weight_decay 1e-3 \
+--warmup_ratio 0.05 \
 --minimum_size 20 \
 --maximum_size 3000
 
 
-python train.py \
---PLM klue/roberta-large \
---seed 2 \
---max_length 128 \
---output_dir exps/model2 \
---data_dir data \
---model_name RobertaSpecialTokenForSequenceClassification \
---train_data_file train.csv \
---num_train_epochs 3 \
---per_device_train_batch_size 16 \
---save_steps 500 \
---logging_steps 100 \
---evaluation_strategy no \
---save_strategy steps \
---learning_rate 3e-5 \
---warmup_ratio 0.05 \
---weight_decay 1e-3 \
---minimum_size 20 \
---maximum_size 3000
+# # Full Training
+# ## Model 1
+# python train.py \
+# --PLM klue/roberta-large \
+# --seed 1 \
+# --max_length 128 \
+# --output_dir exps/model1 \
+# --data_dir data \
+# --rdrop True \
+# --model_name RobertaSpecialTokenForSequenceClassification \
+# --train_data_file train.csv \
+# --num_train_epochs 3 \
+# --per_device_train_batch_size 16 \
+# --save_steps 500 \
+# --logging_steps 100 \
+# --evaluation_strategy no \
+# --save_strategy steps \
+# --learning_rate 3e-5 \
+# --warmup_ratio 0.05 \
+# --weight_decay 1e-3 \
+# --minimum_size 20 \
+# --maximum_size 3000
 
-
-python train.py \
---PLM klue/roberta-large \
---seed 3 \
---max_length 128 \
---output_dir exps/model3 \
---data_dir data \
---model_name RobertaSpecialTokenForSequenceClassification \
---train_data_file train.csv \
---num_train_epochs 3 \
---per_device_train_batch_size 16 \
---save_steps 500 \
---logging_steps 100 \
---evaluation_strategy no \
---save_strategy steps \
---learning_rate 3e-5 \
---warmup_ratio 0.05 \
---weight_decay 1e-3 \
---minimum_size 20 \
---maximum_size 3000
-
-
-python train.py \
---PLM klue/roberta-large \
---seed 4 \
---max_length 128 \
---output_dir exps/model4 \
---data_dir data \
---model_name RobertaSpecialTokenForSequenceClassification \
---train_data_file train.csv \
---num_train_epochs 3 \
---per_device_train_batch_size 16 \
---save_steps 500 \
---logging_steps 100 \
---evaluation_strategy no \
---save_strategy steps \
---learning_rate 3e-5 \
---warmup_ratio 0.05 \
---weight_decay 1e-3 \
---minimum_size 20 \
---maximum_size 3000
-
-
-python train.py \
---PLM klue/roberta-large \
---seed 5 \
---max_length 128 \
---output_dir exps/model5 \
---data_dir data \
---model_name RobertaSpecialTokenForSequenceClassification \
---train_data_file train.csv \
---num_train_epochs 3 \
---per_device_train_batch_size 16 \
---save_steps 500 \
---logging_steps 100 \
---evaluation_strategy no \
---save_strategy steps \
---learning_rate 3e-5 \
---warmup_ratio 0.05 \
---weight_decay 1e-3 \
---minimum_size 20 \
---maximum_size 3000
-
-
-# ## Model2
+# ## Model 2
 # python train.py \
 # --PLM klue/roberta-large \
 # --seed 2 \
 # --max_length 128 \
 # --output_dir exps/model2 \
 # --data_dir data \
-# --model_name RobertaFocalForSequenceClassification \
+# --rdrop True \
+# --loss focal \
+# --model_name RobertaSpecialTokenForSequenceClassification \
 # --train_data_file train.csv \
 # --num_train_epochs 3 \
-# --max_steps 2000 \
 # --per_device_train_batch_size 16 \
-# --per_device_eval_batch_size 16 \
 # --save_steps 500 \
 # --logging_steps 100 \
 # --evaluation_strategy no \
 # --save_strategy steps \
-# --learning_rate 5e-6 \
+# --learning_rate 3e-5 \
 # --warmup_ratio 0.05 \
 # --weight_decay 1e-3 \
-# --minimum_size 20 \
+# --minimum_size 25 \
 # --maximum_size 3000
 
-# ## Model3
+# ## Model 3
 # python train.py \
-# --PLM KETI-AIR/ke-t5-large-ko \
+# --PLM klue/roberta-large \
 # --seed 3 \
 # --max_length 128 \
 # --output_dir exps/model3 \
 # --data_dir data \
-# --model_name T5EncoderArcFaceForSequenceClassification \
+# --PLM tunib/electra-ko-base \
+# --model_name ElectraForSequenceClassification \
 # --train_data_file train.csv \
 # --num_train_epochs 3 \
-# --max_steps 2000 \
 # --per_device_train_batch_size 16 \
-# --per_device_eval_batch_size 16 \
 # --save_steps 500 \
 # --logging_steps 100 \
 # --evaluation_strategy no \
@@ -254,8 +171,38 @@ python train.py \
 # --learning_rate 5e-5 \
 # --warmup_ratio 0.05 \
 # --weight_decay 1e-3 \
+# --minimum_size 10 \
+# --maximum_size 3000
+
+# ## Model 4
+# python train.py \
+# --PLM KETI-AIR/ke-t5-large-ko \
+# --seed 4 \
+# --max_length 128 \
+# --output_dir exps/model4 \
+# --data_dir data \
+# --rdrop True \
+# --model_name T5EncoderForSequenceClassification \
+# --train_data_file train.csv \
+# --num_train_epochs 3 \
+# --per_device_train_batch_size 16 \
+# --save_steps 500 \
+# --logging_steps 100 \
+# --evaluation_strategy no \
+# --save_strategy steps \
+# --learning_rate 1e-4 \
+# --warmup_ratio 0.05 \
+# --weight_decay 1e-3 \
 # --minimum_size 20 \
 # --maximum_size 3000
+
+# # Evaluate
+# python evaluate.py \
+# --seed 42 \
+# --data_dir data \
+# --train_data_file train.csv \
+# --max_length 128 \
+# --per_device_eval_batch_size 16
 
 # # Predict
 # python predict.py \
@@ -270,13 +217,13 @@ python train.py \
 # --save_dir results \
 # --save_file_name 2022-12-20-01.csv
 
-# Ensemble
-python ensemble.py \
---data_dir data \
---train_data_file train.csv \
---test_data_file test.csv \
---max_length 128 \
---per_device_eval_batch_size 16 \
---submission_data_file sample_submission.csv \
---save_dir results \
---save_file_name 2022-12-22-02.csv
+# # Ensemble
+# python ensemble.py \
+# --data_dir data \
+# --train_data_file train.csv \
+# --test_data_file test.csv \
+# --max_length 128 \
+# --per_device_eval_batch_size 16 \
+# --submission_data_file sample_submission.csv \
+# --save_dir results \
+# --save_file_name 2022-12-22-03.csv

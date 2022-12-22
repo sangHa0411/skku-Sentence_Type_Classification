@@ -1,10 +1,11 @@
 import os
-import torch
-import random
 import wandb
+import random
+import importlib
+import torch
+import torch.nn as nn
 import numpy as np
 import pandas as pd
-import importlib
 import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
@@ -28,7 +29,6 @@ from transformers import (
     AutoTokenizer,
     HfArgumentParser,
     DataCollatorWithPadding,
-    # Trainer
 )
 
 def main():
@@ -158,11 +158,11 @@ def main():
     )
     wandb.config.update(training_args)
 
-    loss_fn = nn.CrossEntropyLoss() if training_args.loss_fn == 'crossentropy' else FocalLoss(alpha=0.25, gamma=1)
+    loss = nn.CrossEntropyLoss() if training_args.loss == 'crossentropy' else FocalLoss(alpha=0.25, gamma=1)
 
     # -- Trainer
     if training_args.do_eval :
-        trainer = trainer_class(
+        trainer = Trainer(
             model,
             training_args,
             train_dataset=datasets['train'],
@@ -170,17 +170,17 @@ def main():
             data_collator=data_collator,
             tokenizer=tokenizer,
             compute_metrics=compute_metrics,
-            loss_fn=loss_fn,
+            loss=loss,
             rdrop_flag=training_args.rdrop
         )
     else :
-        trainer = trainer_class(
+        trainer = Trainer(
             model,
             training_args,
             train_dataset=dataset,
             data_collator=data_collator,
             tokenizer=tokenizer,
-            loss_fn=loss_fn,
+            loss=loss,
             rdrop_flag=training_args.rdrop
         )
 

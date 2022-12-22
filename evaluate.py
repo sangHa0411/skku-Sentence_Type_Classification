@@ -4,9 +4,13 @@ import numpy as np
 import pandas as pd
 import collections
 import multiprocessing
+import warnings
 from tqdm import tqdm
 from datasets import Dataset
 from utils.encoder import Encoder
+from utils.metrics import Metrics
+from utils.encoder import Encoder
+from utils.seperator import Seperator
 from datasets import Dataset
 
 from arguments import (
@@ -15,6 +19,7 @@ from arguments import (
     InferenceArguments
 )
 
+from transformers.trainer_utils import EvalPrediction
 from transformers import (
     AutoConfig,
     AutoTokenizer,
@@ -23,23 +28,26 @@ from transformers import (
     Trainer,
 )
 
-ENSEMBLE_SIZE = 10
-MODEL_NAME = 'RobertaSpecialTokenForSequenceClassification'
+ENSEMBLE_SIZE = 4
+MODEL_NAMES = [
+    'RobertaSpecialTokenForSequenceClassification',
+    'RobertaSpecialTokenForSequenceClassification',
+    'ElectraForSequenceClassification',
+    'T5EncoderForSequenceClassification',
+]
+
 MODEL_PATHS = [
-    './exps/model1',
-    './exps/model2',
-    './exps/model3',
-    './exps/model4',
     './exps/model5',
-    './exps/model6',
+    './exps/model6/checkpoint-2000',
     './exps/model7',
     './exps/model8',
-    './exps/model9',
-    './exps/model10',
 ]
 
 
 def main():
+
+    warnings.filterwarnings(action='ignore')
+
     parser = HfArgumentParser(
         (DataTrainingArguments, TrainingArguments, InferenceArguments)
     )
@@ -50,7 +58,7 @@ def main():
     num_proc = int(cpu_cores // 2)
     training_args.dataloader_num_workers = num_proc
 
-    # -- Loading train datasets
+    # -- Loading datasets
     print("\nLoad datasets")
     file_path = os.path.join(data_args.data_dir, data_args.train_data_file)
     train_df = pd.read_csv(file_path)
@@ -58,23 +66,24 @@ def main():
 
     # -- Label Tags
     label_names = list(train_df['label'].unique())
-    label_dict = {i:l for i, l in enumerate(label_names)}
-    
-    # -- Loading test dataset
-    file_path = os.path.join(data_args.data_dir, inference_args.test_data_file)
-    df = pd.read_csv(file_path)
+    label_dict = {l:i for i, l in enumerate(label_names)}
 
-    # -- Parsing datasets
-    print("\nParse dataset")   
-    dataset = Dataset.from_pandas(df)
-    print(dataset)
+    # -- Seperating validation datasets
+    seperator = Seperator(validation_ratio=data_args.validation_ratio)
+    datasets = seperator(train_df)
 
-    test_size = len(dataset['ID'])
+    # -- Labels
+    validation_dataset = datasets['validation']
+    labels = validation_dataset['label']
+    labels = np.array([label_dict[l] for l in labels])
+
+    # -- Remove label compumns
+    validation_dataset = validation_dataset.remove_columns(['label'])
+    print(validation_dataset)
 
     predictions_list = []
-    
     for i in range(ENSEMBLE_SIZE) :
-        model_name = MODEL_NAME
+        model_name = MODEL_NAMES[i]
         model_path = MODEL_PATHS[i]
 
         # -- Encoding datasets
@@ -82,7 +91,8 @@ def main():
         tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
 
         encoder = Encoder(tokenizer, data_args.max_length, label_dict=None, train_flag=False)
-        sub_dataset = dataset.map(encoder, batched=True, num_proc=num_proc)
+        sub_dataset = validation_dataset.map(encoder, batched=True, num_proc=num_proc)
+        sub_dataset = sub_dataset.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', '__index_level_0__'])
         print(sub_dataset)
     
         # -- Loading Config
@@ -123,24 +133,13 @@ def main():
 
     # -- Soft Voting
     predictions = np.mean(predictions_list, axis=0)
-    pred_args = predictions.argmax(-1)
+    eval_preds = EvalPrediction(predictions=predictions, label_ids=labels)
 
-    # -- Postprocess
-    labels = []
-    for i in tqdm(range(test_size)) :
-        decoded_string = label_dict[pred_args[i]]
-        labels.append(decoded_string)
+    # -- Metrics
+    metrics = Metrics(label_names, label_dict)
+    eval_logs = metrics.compute_metrics(eval_preds)
 
-    # -- Submission
-    submission_df = pd.read_csv(
-        os.path.join(data_args.data_dir, inference_args.submission_data_file)
-    )
-
-    submission_df['label'] = labels
-    submission_df.to_csv(
-        os.path.join(inference_args.save_dir, inference_args.save_file_name), 
-        index=False
-    )
+    print(eval_logs)
 
 if __name__ == "__main__":
     main()

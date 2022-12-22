@@ -9,9 +9,9 @@ from transformers.trainer_pt_utils import nested_detach
 
 class Trainer(Trainer) :
 
-    def __init__(self, *args, loss_fn, rdrop_flag, **kwargs):
+    def __init__(self, *args, loss, rdrop_flag, **kwargs):
         super().__init__(*args, **kwargs)
-        self.loss_fn = loss_fn
+        self.loss = loss
         self.rdrop_flag = rdrop_flag
 
     # KL-Divergence Loss 계산하는 코드
@@ -42,7 +42,7 @@ class Trainer(Trainer) :
             batch_logits_2 = outputs.logits[batch_size:, :]
 
             # 각 부분에 대해서 cross entropy loss의 평균을 구한다.            
-            loss_fct_1 = self.loss_fn
+            loss_fct_1 = self.loss
             loss_nll = (
                 loss_fct_1(batch_logits_1.view(-1, num_labels), labels.view(-1)) + \
                 loss_fct_1(batch_logits_2.view(-1, num_labels), labels.view(-1))

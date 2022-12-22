@@ -72,7 +72,7 @@ class TrainingArguments(TrainingArguments):
             "help": "rdrop training"
         }
     )
-    loss_fn: str = field(
+    loss: str = field(
         default="crossentropy",
         metadata={
             "help": "training loss"

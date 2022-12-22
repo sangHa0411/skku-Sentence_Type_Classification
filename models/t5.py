@@ -8,7 +8,7 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 from transformers.models.t5.modeling_t5 import T5Config, T5PreTrainedModel, T5Stack
 from transformers.utils.model_parallel_utils import assert_device_map, get_device_map
 
-class T5EncoderArcFaceForSequenceClassification(T5PreTrainedModel):
+class T5EncoderForSequenceClassification(T5PreTrainedModel):
     _keys_to_ignore_on_load_missing = [r"encoder.embed_tokens.weight"]
 
     def __init__(self, config: T5Config):
@@ -22,7 +22,8 @@ class T5EncoderArcFaceForSequenceClassification(T5PreTrainedModel):
         self.encoder = T5Stack(encoder_config, self.shared)
 
         self.dropout = nn.Dropout(config.dropout_rate)
-        self.classifier = ArcFace(config.d_model, config.num_labels)
+        self.classifier = nn.Linear(config.d_model, config.num_labels, bias=False)
+
 
         # Initialize weights and apply final processing
         self.post_init()
@@ -91,9 +92,9 @@ class T5EncoderArcFaceForSequenceClassification(T5PreTrainedModel):
         )
         hidden_states = encoder_outputs[0]
         sequence_output = hidden_states[input_ids == self.config.eos_token_id]
-        sequence_output = self.dropout(sequence_output)
 
         logits = self.classifier(sequence_output)
+
         loss = None
         if labels is not None:
             loss_fct = nn.CrossEntropyLoss()
@@ -106,6 +107,6 @@ class T5EncoderArcFaceForSequenceClassification(T5PreTrainedModel):
         return SequenceClassifierOutput(
             loss=loss,
             logits=logits,
-            hidden_states=outputs.hidden_states,
-            attentions=outputs.attentions,
+            hidden_states=encoder_outputs.hidden_states,
+            attentions=encoder_outputs.attentions,
         )
