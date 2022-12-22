@@ -23,15 +23,14 @@ from transformers import (
     Trainer,
 )
 
-ENSEMBLE_SIZE = 6
+ENSEMBLE_SIZE = 5
 MODEL_NAME = 'RobertaSpecialTokenForSequenceClassification'
 MODEL_PATHS = [
-    './exps/model1',
-    './exps/model2',
-    './exps/model3',
-    './exps/model4',
-    './exps/model5',
-    './exps/model6',
+    './exps/model1/checkpoint-2000',
+    './exps/model2/checkpoint-2000',
+    './exps/model3/checkpoint-2000',
+    './exps/model4/checkpoint-2000',
+    './exps/model5/checkpoint-2000',
 ]
 
 
