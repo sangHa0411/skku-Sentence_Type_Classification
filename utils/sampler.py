@@ -62,28 +62,34 @@ class StratifiedSampler(Sampler[int]):
         else:
             generator = self.generator
 
+        # 각 label별로 데이터 인덱스들을 정리
         total_size = len(self.data_source['labels'])
         labels = self.data_source['labels']
         label_indices = self.get_label_indices(labels)
 
+        # 각 label이 가지는 데이터 수를 파악
         label_batch_sizes = {}
         for l in label_indices :
             l_indices = label_indices[l]
             label_batch_sizes[l] = len(l_indices)
-
+        
+        # 데이터 수를 많이 가지고 있는 label들을 파악
         label_items = sorted(label_batch_sizes.items(), key=lambda x : x[1], reverse=True)
         iter_size = total_size // self.batch_size
 
+        # Label 1 : 사실형-긍정-미래-확실
         item1 = label_items[0][0]
         item1_size = len(label_indices[item1])
         item1_batch_size = item1_size // iter_size
         item1_indices = label_indices[item1]
 
+        # Label 2 : 사실형-긍정-과거-확실
         item2 = label_items[1][0]
         item2_size = len(label_indices[item2])
         item2_batch_size = item2_size // iter_size
         item2_indices = label_indices[item2]
 
+        # Label 1, 2 제외한 나머지 label들
         item3_size = total_size - (item1_size + item2_size)
         item3_batch_size = item3_size // iter_size
         item3_indices = []
@@ -92,6 +98,17 @@ class StratifiedSampler(Sampler[int]):
                 item3_indices.extend(label_indices[l])
         random.shuffle(item3_indices)
 
+        # 3개의 그룹으로 나뉘어진 인덱스들을 각 비율에 맞게 batch에 들어가게끔 한다.
+        """
+        예시
+        train batch size : 16
+
+            1) Label 1 (사실형-긍정-미래-확실) : 6
+            2) Label 2 (사실형-긍정-과거-확실) : 5
+            3) 그 외 나머지 : 5
+        
+        하나의 batch안에 모두 같은 label이 되는 것을 방지한다.
+        """
         sampled = []
         for i in range(iter_size) :
             sub_sampled = []

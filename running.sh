@@ -9,7 +9,6 @@ python train.py \
 --max_length 128 \
 --output_dir exps/test \
 --data_dir data \
---rdrop True \
 --train_data_file train.csv \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
@@ -32,7 +31,6 @@ python train.py \
 --max_length 128 \
 --output_dir exps/test \
 --data_dir data \
---rdrop True \
 --train_data_file train.csv \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
@@ -54,7 +52,6 @@ python train.py \
 --max_length 128 \
 --output_dir exps/model1 \
 --data_dir data \
---rdrop True \
 --model_name RobertaSpecialTokenForSequenceClassification \
 --train_data_file train.csv \
 --num_train_epochs 3 \
@@ -76,7 +73,6 @@ python train.py \
 --max_length 128 \
 --output_dir exps/model2 \
 --data_dir data \
---rdrop True \
 --model_name RobertaSpecialTokenForSequenceClassification \
 --train_data_file train.csv \
 --num_train_epochs 3 \
@@ -99,7 +95,6 @@ python train.py \
 --max_length 128 \
 --output_dir exps/model3 \
 --data_dir data \
---rdrop True \
 --model_name RobertaSpecialTokenForSequenceClassification \
 --train_data_file train.csv \
 --num_train_epochs 3 \

@@ -92,6 +92,11 @@ class Augmentation :
         return dataset
 
     # aeda를 통한 문장 변형
+    """ 
+    예시
+        before : '단 어떤 영웅도 2주 연속 제외되지 않으며 영웅 로테이션은 팬, 선수 등의 의견을 적극 수렴해 시즌 중에도 수정될 수 있다.'
+        after : '단, 어떤 영웅도 2주 연속 제외되지 않으며 영웅 로테:이션은 팬, 선수 등의 의견을 적극 수렴해 시즌 중에도 수정될 수 있다.'
+    """
     def aeda(self, data) :
         sentence = data['문장']
         # 구두점 삽입 횟수
@@ -115,6 +120,11 @@ class Augmentation :
         return data
 
     # 문장 내의 몇몇 단어들을 임의의 단어로 변환
+    """
+    예시
+        before : '확실히 백내장 진단을 받았어도 입원 치료를 받을 만큼 특별한 상황이었음을 입증하지 못하면 30만원 이상의 보험금을 받기 어려울 전망이다.'
+        after : '확실히 백 된장 진단을 받았어도 입원 치료를 받을 만큼 특별한 보잘것없이 운전음을 입증하지 못하면 30으리원 원단의 보험금을 받 고등학생 어려울 전망이다.'
+    """
     def change(self, data) :
         sentence = data['문장']
         # tokenizer를 통해서 index들로 변환
@@ -129,7 +139,6 @@ class Augmentation :
                 tokens[c_id] = np.random.randint(len(self.tokenizer))
 
             data['문장'] = self.tokenizer.decode(tokens)
-
         return data
 
     # 문장의 순서 바꾸기

@@ -30,19 +30,13 @@ from transformers import (
     Trainer,
 )
 
-ENSEMBLE_SIZE = 4
+ENSEMBLE_SIZE = 1
 MODEL_NAMES = [
     'RobertaSpecialTokenForSequenceClassification',
-    'RobertaSpecialTokenForSequenceClassification',
-    'ElectraForSequenceClassification',
-    'T5EncoderForSequenceClassification',
 ]
 
 MODEL_PATHS = [
-    './exps/model5',
-    './exps/model6',
-    './exps/model7',
-    './exps/model8',
+    './exps/model1/checkpoint-2000',
 ]
 
 
@@ -98,13 +92,7 @@ def main():
     
         # -- Loading Config
         config = AutoConfig.from_pretrained(model_path)
-
-        if 'roberta' in model_name.lower() :
-            model_category = importlib.import_module('models.roberta')
-        elif 'electra' in model_name.lower() :
-            model_category = importlib.import_module('models.electra')
-        elif 't5' in model_name.lower() :
-            model_category = importlib.import_module('models.t5')
+        model_category = importlib.import_module('models.roberta')
 
         # -- Loading Model
         model_class = getattr(model_category, model_name)

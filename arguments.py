@@ -66,19 +66,7 @@ class TrainingArguments(TrainingArguments):
             "help": "model output directory"
         }
     )
-    rdrop: bool = field(
-        default=False,
-        metadata={
-            "help": "rdrop training"
-        }
-    )
-    loss: str = field(
-        default="crossentropy",
-        metadata={
-            "help": "training loss"
-        }
-    )
-
+ 
 @dataclass
 class LoggingArguments:
     dotenv_path: Optional[str] = field(

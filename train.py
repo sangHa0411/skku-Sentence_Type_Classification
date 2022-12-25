@@ -10,7 +10,6 @@ import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
 from trainer import Trainer
-from models.loss import FocalLoss
 from utils.metrics import Metrics
 from utils.encoder import Encoder
 from utils.seperator import Seperator
@@ -45,6 +44,8 @@ def main():
     # -- Arguments
     model_args, data_args, training_args, logging_args = parser.parse_args_into_dataclasses()
     training_args.dataloader_num_workers = num_proc
+    
+    # -- Seed 
     seed_everything(training_args.seed)
 
     # -- Loading datasets
@@ -114,16 +115,9 @@ def main():
     config.cls_token_id = tokenizer.cls_token_id
     config.eos_token_id = tokenizer.eos_token_id
 
-    
-    if 'roberta' in model_args.PLM :
-        model_category = importlib.import_module('models.roberta')
-    elif 'electra' in model_args.PLM :
-        model_category = importlib.import_module('models.electra')
-    elif 't5' in model_args.PLM :
-        model_category = importlib.import_module('models.t5')
-    else :
-        raise NotImplementedError('Not implemented model type')
-
+    ## -- Model Category
+    model_category = importlib.import_module('models.roberta')
+    ## -- Model Class
     model_class = getattr(model_category, model_args.model_name)
     model = model_class.from_pretrained(model_args.PLM, config=config)
 
@@ -141,6 +135,7 @@ def main():
     # -- Output Directory
     load_dotenv(dotenv_path=logging_args.dotenv_path)
 
+    # -- Wandb Setting
     WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
     wandb.login(key=WANDB_AUTH_KEY)
 
@@ -158,8 +153,6 @@ def main():
     )
     wandb.config.update(training_args)
 
-    loss = nn.CrossEntropyLoss() if training_args.loss == 'crossentropy' else FocalLoss(alpha=0.25, gamma=1)
-
     # -- Trainer
     if training_args.do_eval :
         trainer = Trainer(
@@ -170,8 +163,6 @@ def main():
             data_collator=data_collator,
             tokenizer=tokenizer,
             compute_metrics=compute_metrics,
-            loss=loss,
-            rdrop_flag=training_args.rdrop
         )
     else :
         trainer = Trainer(
@@ -180,14 +171,14 @@ def main():
             train_dataset=dataset,
             data_collator=data_collator,
             tokenizer=tokenizer,
-            loss=loss,
-            rdrop_flag=training_args.rdrop
         )
-
+    
+    # -- Training
     print('\nTraining')
     trainer.train()
-
+    
     if training_args.do_eval :
+        # -- Evaluation
         print('\nEvaluating')
         eval_log = trainer.evaluate()
         print(eval_log)

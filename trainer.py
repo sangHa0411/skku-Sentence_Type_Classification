@@ -3,18 +3,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from utils.sampler import StratifiedSampler
-from models.loss import FocalLoss
 from transformers import Trainer
 from typing import Dict, List, Any, Union, Tuple, Optional
 from transformers.trainer_pt_utils import nested_detach
 
 class Trainer(Trainer) :
-
-    def __init__(self, *args, loss, rdrop_flag, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.loss = loss
-        self.rdrop_flag = rdrop_flag
-
 
     def _get_train_sampler(self) -> Optional[torch.utils.data.Sampler]:
 
@@ -38,38 +31,34 @@ class Trainer(Trainer) :
     def compute_loss(self, model, inputs):
         num_labels = model.config.num_labels
 
-        if self.rdrop_flag :
-            input_names = inputs.keys()
-            batch_size = inputs['input_ids'].shape[0]
-            labels = inputs.pop('labels')
+        input_names = inputs.keys()
+        batch_size = inputs['input_ids'].shape[0]
+        labels = inputs.pop('labels')
 
-            # 같은 입력을 2개 concat한다.
-            for input_name in input_names :
-                batch = inputs[input_name]
-                inputs[input_name] = torch.cat([batch, batch], dim=0)
+        # 같은 입력을 2개 concat한다.
+        for input_name in input_names :
+            batch = inputs[input_name]
+            inputs[input_name] = torch.cat([batch, batch], dim=0)
 
-            # 출력을 구한다.
-            outputs = model(**inputs)
+        # 출력을 구한다.
+        outputs = model(**inputs)
 
-            # 앞서 concat 한 부분을 나눈다.
-            batch_logits_1 = outputs.logits[:batch_size, :]
-            batch_logits_2 = outputs.logits[batch_size:, :]
+        # 앞서 concat 한 부분을 나눈다.
+        batch_logits_1 = outputs.logits[:batch_size, :]
+        batch_logits_2 = outputs.logits[batch_size:, :]
 
-            # 각 부분에 대해서 cross entropy loss의 평균을 구한다.            
-            loss_fct_1 = self.loss
-            loss_nll = (
-                loss_fct_1(batch_logits_1.view(-1, num_labels), labels.view(-1)) + \
-                loss_fct_1(batch_logits_2.view(-1, num_labels), labels.view(-1))
-            )
+        # 각 부분에 대해서 cross entropy loss의 평균을 구한다.            
+        loss_fct_1 = nn.CrossEntropyLoss()
+        loss_nll = (
+            loss_fct_1(batch_logits_1.view(-1, num_labels), labels.view(-1)) + \
+            loss_fct_1(batch_logits_2.view(-1, num_labels), labels.view(-1))
+        )
 
-            # 두 부분의 logit 분포 차이가 적어질 수 있게 KL-Divergence Loss 구한다.
-            loss_fct_2 = nn.KLDivLoss(reduction='batchmean')
-            loss_kl = self.get_kl_loss(loss_fct_2, batch_logits_1, batch_logits_2)
+        # 두 부분의 logit 분포 차이가 적어질 수 있게 KL-Divergence Loss 구한다.
+        loss_fct_2 = nn.KLDivLoss(reduction='batchmean')
+        loss_kl = self.get_kl_loss(loss_fct_2, batch_logits_1, batch_logits_2)
 
-            loss = loss_nll + loss_kl
-        else :
-            loss = self.compute_eval_loss(model, inputs)
-
+        loss = loss_nll + loss_kl
         return loss
 
 
