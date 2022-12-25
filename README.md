@@ -5,6 +5,17 @@
   * 목표
       1. 불균형 극심한 데이터셋 과정에서 어떻게 하면 Classification 성능을 높일 수 있는지 알아보기
       
+## Version
+  * Torch version : 1.11.0
+  * Numpy version : 1.23.4
+  * Pandas version : 1.5.2
+  * Datasets version : 1.5.2
+  * Datasets version : 2.3.0
+  * Transformers version : 4.19.0
+  
+## Platform
+  * Google Cloud Platform - A100 GPU (Ubuntu)
+      
 ## Dataset
   * 문장 유형에 관한 분류 데이터
       1. 4가지 카테고리로 분류되어 있다.
@@ -80,6 +91,86 @@
   --seed 1 \
   --max_length 128 \
   --output_dir exps/model1 \
+  --data_dir data \
+  --model_name RobertaSpecialTokenForSequenceClassification \
+  --train_data_file train.csv \
+  --num_train_epochs 3 \
+  --per_device_train_batch_size 16 \
+  --save_steps 500 \
+  --logging_steps 100 \
+  --evaluation_strategy no \
+  --save_strategy steps \
+  --learning_rate 2.5e-5 \
+  --warmup_ratio 0.05 \
+  --weight_decay 1e-3 \
+  --minimum_size 20 \
+  --maximum_size 3000
+  
+  python train.py \
+  --PLM klue/roberta-large \
+  --seed 2 \
+  --max_length 128 \
+  --output_dir exps/model2 \
+  --data_dir data \
+  --model_name RobertaSpecialTokenForSequenceClassification \
+  --train_data_file train.csv \
+  --num_train_epochs 3 \
+  --per_device_train_batch_size 16 \
+  --save_steps 500 \
+  --logging_steps 100 \
+  --evaluation_strategy no \
+  --save_strategy steps \
+  --learning_rate 2.5e-5 \
+  --warmup_ratio 0.05 \
+  --weight_decay 1e-3 \
+  --minimum_size 20 \
+  --maximum_size 3000
+  
+  python train.py \
+  --PLM klue/roberta-large \
+  --seed 3 \
+  --max_length 128 \
+  --output_dir exps/model3 \
+  --data_dir data \
+  --model_name RobertaSpecialTokenForSequenceClassification \
+  --train_data_file train.csv \
+  --num_train_epochs 3 \
+  --per_device_train_batch_size 16 \
+  --save_steps 500 \
+  --logging_steps 100 \
+  --evaluation_strategy no \
+  --save_strategy steps \
+  --learning_rate 2.5e-5 \
+  --warmup_ratio 0.05 \
+  --weight_decay 1e-3 \
+  --minimum_size 20 \
+  --maximum_size 3000
+  
+  python train.py \
+  --PLM klue/roberta-large \
+  --seed 4 \
+  --max_length 128 \
+  --output_dir exps/model4 \
+  --data_dir data \
+  --model_name RobertaSpecialTokenForSequenceClassification \
+  --train_data_file train.csv \
+  --num_train_epochs 3 \
+  --per_device_train_batch_size 16 \
+  --save_steps 500 \
+  --logging_steps 100 \
+  --evaluation_strategy no \
+  --save_strategy steps \
+  --learning_rate 2.5e-5 \
+  --warmup_ratio 0.05 \
+  --weight_decay 1e-3 \
+  --minimum_size 20 \
+  --maximum_size 3000
+  
+  python train.py \
+  --PLM klue/roberta-large \
+  --seed 5 \
+  --max_length 128 \
+  --output_dir exps/model5 \
   --data_dir data \
   --model_name RobertaSpecialTokenForSequenceClassification \
   --train_data_file train.csv \
