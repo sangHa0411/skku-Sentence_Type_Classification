@@ -1,7 +1,6 @@
 
 import torch
 from torch import nn
-from torch.nn import CrossEntropyLoss
 from transformers.modeling_outputs import SequenceClassifierOutput
 from transformers.models.roberta.modeling_roberta import RobertaPreTrainedModel, RobertaModel
 
@@ -15,7 +14,7 @@ class ClassificationHead(nn.Module):
     def forward(self, features):
         x = self.dropout(features)
         x = self.dense(x)
-        x = torch.tanh(x)
+        x = torch.tanh(x) + features
         x = self.dropout(x)
         x = self.out_proj(x)
         return x

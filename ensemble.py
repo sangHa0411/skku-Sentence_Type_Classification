@@ -82,14 +82,8 @@ def main():
     
         # -- Loading Config
         config = AutoConfig.from_pretrained(model_path)
-
-        if 'roberta' in model_name.lower() :
-            model_category = importlib.import_module('models.roberta')
-        elif 'electra' in model_name.lower() :
-            model_category = importlib.import_module('models.electra')
-        elif 't5' in model_name.lower() :
-            model_category = importlib.import_module('models.t5')
-
+        model_category = importlib.import_module('models.roberta')
+        
         # -- Loading Model
         model_class = getattr(model_category, model_name)
         model = model_class.from_pretrained(model_path, config=config)

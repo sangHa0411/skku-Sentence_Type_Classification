@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import multiprocessing
 from dotenv import load_dotenv
-from datasets import DatasetDict
 from trainer import Trainer
 from utils.metrics import Metrics
 from utils.encoder import Encoder
