@@ -9,7 +9,6 @@
   * Torch version : 1.11.0
   * Numpy version : 1.23.4
   * Pandas version : 1.5.2
-  * Datasets version : 1.5.2
   * Datasets version : 2.3.0
   * Transformers version : 4.19.0
   
