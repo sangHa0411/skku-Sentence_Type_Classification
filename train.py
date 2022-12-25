@@ -1,5 +1,5 @@
 import os
-import wandb
+# import wandb
 import random
 import importlib
 import torch
@@ -131,26 +131,25 @@ def main():
     metrics = Metrics(label_names, label_dict)
     compute_metrics = metrics.compute_metrics
 
-    # -- Output Directory
-    load_dotenv(dotenv_path=logging_args.dotenv_path)
+    # load_dotenv(dotenv_path=logging_args.dotenv_path)
 
-    # -- Wandb Setting
-    WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
-    wandb.login(key=WANDB_AUTH_KEY)
+    # # -- Wandb Setting
+    # WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
+    # wandb.login(key=WANDB_AUTH_KEY)
 
-    args = training_args
-    if args.max_steps == -1 :
-        wandb_name = f'EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
-    else :
-        wandb_name = f'MS:{args.max_steps}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
+    # args = training_args
+    # if args.max_steps == -1 :
+    #     wandb_name = f'EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
+    # else :
+    #     wandb_name = f'MS:{args.max_steps}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
 
-    wandb.init(
-        entity='sangha0411',
-        project=logging_args.project_name, 
-        name=wandb_name,
-        group=logging_args.group_name
-    )
-    wandb.config.update(training_args)
+    # wandb.init(
+    #     entity='sangha0411',
+    #     project=logging_args.project_name, 
+    #     name=wandb_name,
+    #     group=logging_args.group_name
+    # )
+    # wandb.config.update(training_args)
 
     # -- Trainer
     if training_args.do_eval :
@@ -184,7 +183,7 @@ def main():
 
     if training_args.do_eval == False :
         trainer.save_model(training_args.output_dir)
-    wandb.finish()
+    # wandb.finish()
 
 
 def seed_everything(seed):
