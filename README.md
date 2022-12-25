@@ -3,7 +3,7 @@
 ## Project
   * 대회 : 2022 성균관대 주최 문장 유형 분류 AI 경진대회
   * 목표
-      1. 불균형시 극심한 데이터셋 과정에서 어떻게 하면 Classification 성능을 높일 수 있는지 알아보기
+      1. 불균형 극심한 데이터셋 과정에서 어떻게 하면 Classification 성능을 높일 수 있는지 알아보기
       
 ## Dataset
   * 문장 유형에 관한 분류 데이터
@@ -109,6 +109,13 @@
  
   ```
 
+## Validation
+  * 각 Label별로 데이터 수의 20%을 분리해서 Train, Validation 데이터를 만들고 모델 성능 검증
+  * Seed 42
+  * 성능 평가
+      * ![스크린샷 2022-12-25 오후 1 35 53](https://user-images.githubusercontent.com/48673702/209457065-320e552f-8a93-4a46-a3e7-4efbc329d524.png)  
+
+
 ## Ensemble
   * 위 hyperparameter의 모델을 seed를 다르게 해서 5개의 모델을 학습하고 Soft Voting을 실행
 
@@ -123,12 +130,5 @@
       2. Undersampling을 적용하였을 때 모델 성능이 더 좋아졌고 데이터를 임의로 선택하는 과정 덕분에 앙상블에서 많은 성능 향상 있었다.
       3. 데이터의 비율에 맞게 sampler를 따로 만들어서 학습에 적용하는 것도 모델 성능 향상에 도움이 되었다.
       
-
-
-
-
-
-
-
 
 
