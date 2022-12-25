@@ -57,7 +57,7 @@
 |weight decay|1e-3|
 |warmup ratio|0.05|
 |miminum_size|20|
-|maximum_size|20|
+|maximum_size|3000|
 
 
 ## Terminal Command Example
