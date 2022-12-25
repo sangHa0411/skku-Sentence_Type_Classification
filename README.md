@@ -6,6 +6,7 @@
       1. 불균형 극심한 데이터셋 과정에서 어떻게 하면 Classification 성능을 높일 수 있는지 알아보기
       
 ## Version
+  * Python : 3.9.15
   * Torch version : 1.11.0
   * Numpy version : 1.23.4
   * Pandas version : 1.5.2
