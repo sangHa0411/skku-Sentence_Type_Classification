@@ -213,7 +213,7 @@
 ## Leaderboard
 |Model|Public|Private|
 |-----|----|----|
-|ensemable|0.75731(7th)|0.75506(6th)|
+|ensemable|0.75731(7th)|0.75506(5th)|
 
 ## 후기
   * 배운 점 
