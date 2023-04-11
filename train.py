@@ -1,5 +1,5 @@
 import os
-# import wandb
+import wandb
 import random
 import importlib
 import torch
@@ -50,20 +50,27 @@ def main():
     # -- Loading datasets
     print("\nLoad datasets")
     file_path = os.path.join(data_args.data_dir, data_args.train_data_file)
-    df = pd.read_csv(file_path)
-    df = df.drop_duplicates(subset=['문장'])
+    train_df = pd.read_csv(file_path)
+    train_df = train_df.drop_duplicates(subset=['문장'])
 
-    label_names = list(df['label'].unique())
+    label_names = list(train_df['label'].unique())
     label_dict = {l:i for i, l in enumerate(label_names)}
 
     # -- Preprocessing datasets
     print("\nPreprocessing datasets")   
     if training_args.do_eval :
-        seperator = Seperator(validation_ratio=data_args.validation_ratio)
-        datasets = seperator(df)
-        print(datasets)
+        file_path = os.path.join(data_args.data_dir, data_args.validation_data_file)
+        validation_df = pd.read_csv(file_path)
+        validation_df = validation_df.drop_duplicates(subset=['문장'])
+
+        train_dataset = Dataset.from_pandas(train_df)
+        validation_dataset = Dataset.from_pandas(validation_df)
+
+        dataset = DatasetDict({'train' : train_dataset, 'validation' : validation_dataset})
+        print(dataset)
+
     else :
-        dataset = Dataset.from_pandas(df)
+        dataset = Dataset.from_pandas(train_df)
         print(dataset)
 
     # -- Encoding datasets
@@ -78,21 +85,21 @@ def main():
     print("\nEncoding datasets")
     encoder = Encoder(tokenizer, data_args.max_length, label_dict)
     if training_args.do_eval :
-        augmentator = Augmentation(
-            tokenizer=tokenizer,
-            max_num=data_args.maximum_size, 
-            min_num=data_args.minimum_size, 
-            eval_flag=True
-        )
+        # augmentator = Augmentation(
+        #     tokenizer=tokenizer,
+        #     max_num=data_args.maximum_size, 
+        #     min_num=data_args.minimum_size, 
+        #     eval_flag=True
+        # )
 
-        datasets = datasets.map(encoder, batched=True, num_proc=num_proc)
-        train_dataset = datasets['train']
-        eval_dataset = datasets['validation']
+        dataset = dataset.map(encoder, batched=True, num_proc=num_proc)
+        # train_dataset = datasets['train']
+        # eval_dataset = datasets['validation']
 
-        train_dataset = augmentator(train_dataset)
-        datasets = DatasetDict({'train' : train_dataset, 'validation' : eval_dataset})
-        datasets = datasets.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label', '__index_level_0__'])
-        print(datasets)
+        # train_dataset = augmentator(train_dataset)
+        # datasets = DatasetDict({'train' : train_dataset, 'validation' : eval_dataset})
+        dataset = dataset.remove_columns(['문장', '유형', '극성', '시제', '확실성', 'label', '__index_level_0__'])
+        print(dataset)
     else :
         augmentator = Augmentation(
             tokenizer=tokenizer,
@@ -102,7 +109,7 @@ def main():
         )
         dataset = dataset.map(encoder, batched=True, num_proc=num_proc)
         dataset = augmentator(dataset)
-        dataset = dataset.remove_columns(['ID', '문장', '유형', '극성', '시제', '확실성', 'label', '__index_level_0__'])
+        dataset = dataset.remove_columns(['문장', '유형', '극성', '시제', '확실성', 'label', '__index_level_0__'])
         print(dataset)
 
     # -- Loading config & Model
@@ -131,33 +138,33 @@ def main():
     metrics = Metrics(label_names, label_dict)
     compute_metrics = metrics.compute_metrics
 
-    # load_dotenv(dotenv_path=logging_args.dotenv_path)
+    load_dotenv(dotenv_path=logging_args.dotenv_path)
 
-    # # -- Wandb Setting
-    # WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
-    # wandb.login(key=WANDB_AUTH_KEY)
+    # -- Wandb Setting
+    WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
+    wandb.login(key=WANDB_AUTH_KEY)
 
-    # args = training_args
-    # if args.max_steps == -1 :
-    #     wandb_name = f'EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
-    # else :
-    #     wandb_name = f'MS:{args.max_steps}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
+    args = training_args
+    if args.max_steps == -1 :
+        wandb_name = f'EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
+    else :
+        wandb_name = f'MS:{args.max_steps}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}'
 
-    # wandb.init(
-    #     entity='sangha0411',
-    #     project=logging_args.project_name, 
-    #     name=wandb_name,
-    #     group=logging_args.group_name
-    # )
-    # wandb.config.update(training_args)
+    wandb.init(
+        entity='sangha0411',
+        project=logging_args.project_name, 
+        name=wandb_name,
+        group=logging_args.group_name
+    )
+    wandb.config.update(training_args)
 
     # -- Trainer
     if training_args.do_eval :
         trainer = Trainer(
             model,
             training_args,
-            train_dataset=datasets['train'],
-            eval_dataset=datasets['validation'],
+            train_dataset=dataset['train'],
+            eval_dataset=dataset['validation'],
             data_collator=data_collator,
             tokenizer=tokenizer,
             compute_metrics=compute_metrics,
@@ -184,7 +191,7 @@ def main():
     if training_args.do_eval == False :
         trainer.save_model(training_args.output_dir)
         
-    # wandb.finish()
+    wandb.finish()
 
 
 def seed_everything(seed):

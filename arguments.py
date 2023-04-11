@@ -38,10 +38,10 @@ class DataTrainingArguments:
             "help": "name of train data"
         }
     )
-    validation_ratio: Optional[float] = field(
-        default=0.2, 
+    validation_data_file: str = field(
+        default="validation.csv", 
         metadata={
-            "help": "validation ratio"
+            "help": "name of validation data"
         }
     )
     minimum_size: Optional[int] = field(
